@@ -1,0 +1,28 @@
+[project]
+name = "eltler"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "sheep-snow",email = "user.email=71830342+sheep-snow@users.noreply.github.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "boto3 (>=1.36.21,<2.0.0)",
+    "requests (>=2.32.3,<3.0.0)",
+    "aws-cdk-lib (>=2.178.2,<3.0.0)",
+    "atproto (>=0.0.58,<0.0.59)",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.9.6"
+pytest = "^8.3.4"
+
+[tool.poetry]
+package-mode = false

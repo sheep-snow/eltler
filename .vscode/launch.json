@@ -1,0 +1,43 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug App",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/hello.py",
+            "args": [],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
+                // "AWS_PROFILE": "set your aws cli profile.",
+            }
+        },
+        {
+            "name": "Run Test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "args": [
+                "tests/",
+                "--junit-xml=${workspaceFolder}/.unittest_results.xml"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
+            }
+        },
+        {
+            "name": "Run Ruff Check",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "ruff",
+            "console": "integratedTerminal",
+            "args": [
+                "check"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}"
+            }
+        }
+    ]
+}
