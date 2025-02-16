@@ -4,8 +4,7 @@ import aws_cdk as cdk
 
 from cdk.batch_stack import BatchStack
 
-
 app = cdk.App()
-BatchStack(app, "BatchStackStack")
+BatchStack(app, "BatchStack")
 
 app.synth()
