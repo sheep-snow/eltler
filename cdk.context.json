@@ -4,13 +4,21 @@
         "loglevel": "DEBUG",
         "max_retries": 1,
         "image_expiration_days": 3,
-        "userinfo_expiration_days": 30
+        "userinfo_expiration_days": 30,
+        "vpc-cidr": "10.22.0.0/24",
+        "vpc-mask": 26,
+        "max_capacity": 1,
+        "ecr_image_tag": "dev"
     },
     "prod": {
         "app_name": "eltler",
         "loglevel": "INFO",
         "max_retries": 3,
         "image_expiration_days": 7,
-        "userinfo_expiration_days": 365
+        "userinfo_expiration_days": 365,
+        "vpc-cidr": "10.33.0.0/24",
+        "vpc-mask": 26,
+        "max_capacity": 1,
+        "ecr_image_tag": "latest"
     }
 }

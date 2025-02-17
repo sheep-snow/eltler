@@ -28,8 +28,14 @@ $ poetry run npx cdk deploy eltler-CommonResourceStack-dev -c env=dev
 $ poetry run npx cdk deploy eltler-ApiStack-dev -c env=dev
 $ poetry run npx cdk deploy eltler-SignupFlowStack-dev -c env=dev
 $ poetry run npx cdk deploy eltler-SignoutFlowStack-dev -c env=dev
+$ poetry run npx cdk deploy eltler-FirehoseStack-dev -c env=dev
 ```
 
 ## Design
 
 [Systen Design](docs/system-design.drawio)
+
+## See
+
+* atproto python SDK: https://atproto.blue/
+* examples: https://github.com/MarshalX/atproto/tree/main/examples

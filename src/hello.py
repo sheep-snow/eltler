@@ -12,6 +12,7 @@ def handler(event, context):
     msg = get_message()
     logger.info(msg)
     return {"message": "OK", "status": 200}
+    
 
 
 # for local debugging

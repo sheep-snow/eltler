@@ -29,7 +29,7 @@ class SignoutFlowStack(BaseStack):
         # step functionの作成
         self.flow = self.create_workflow(self.getter_lambda, self.notifier_lambda)
 
-    def create_workflow(self, entry_lambda):
+    def create_workflow(self, getter_lambda, notifier_lambda):
         # Lambdaタスク定義
         getter_task = tasks.LambdaInvoke(self, "getter", lambda_function=self.getter_lambda, output_path="$.Payload")
         notifier_task = tasks.LambdaInvoke(self, "notifier", lambda_function=self.notifier_lambda, output_path="$.Payload")

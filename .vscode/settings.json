@@ -5,6 +5,9 @@
     },
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "charliermarsh.ruff",
+    "ruff.organizeImports": true,
+    "ruff.lint.enable": true,
+    "ruff.configurationPreference": "filesystemFirst",
     "python.languageServer": "Pylance",
     "editor.formatOnPaste": false,
     "files.watcherExclude": {
@@ -14,6 +17,7 @@
         "**/.hg/store/**": true,
         "**/.venv/**": true
     },
+    "ruff.nativeServer": "off",
     "github.copilot.enable": {
         "*": true,
         "properties": false

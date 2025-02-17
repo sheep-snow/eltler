@@ -24,4 +24,4 @@ def get_unread_dms(client) -> None:
     # create resolver instance with in-memory cache
     id_resolver = IdResolver()
     # resolve DID
-    chat_to = id_resolver.handle.resolve('test.marshal.dev')
+    id_resolver.handle.resolve('test.marshal.dev')

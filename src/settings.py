@@ -7,6 +7,7 @@ from lib.aws.secrets_manager import get_secret
 
 print("Loading settings...")
 
+
 @dataclass
 class Settings:
     SRC_VERSION: str
@@ -27,7 +28,7 @@ class Settings:
 
     def __init__(self):
         """設定を読み込む"""
-        _secrets = get_secret(f"{self.APP_NAME}-{self.STAGE}")
+        _secrets = get_secret(f"{os.getenv('')}")
         self.FERNET_KEY = _secrets.get("fernet_key")
         self.BOT_USERID = _secrets.get("bot_userid")
         self.BOT_APP_PASSWORD = _secrets.get("bot_app_password")
@@ -46,3 +47,6 @@ class Settings:
             return revparsed.strip()
         except BaseException:
             return "0.0.0"
+
+
+settings = Settings()
