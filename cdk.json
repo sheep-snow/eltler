@@ -11,7 +11,10 @@
       "source.bat",
       "**/__init__.py",
       "python/__pycache__",
-      "tests"
+      "tests",
+      ".venv/",
+      ".ruff_cache/",
+      ".pytest_cache/"
     ]
   },
   "context": {

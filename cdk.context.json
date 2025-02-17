@@ -1,0 +1,16 @@
+{
+    "dev": {
+        "app_name": "eltler",
+        "loglevel": "DEBUG",
+        "max_retries": 1,
+        "image_expiration_days": 3,
+        "userinfo_expiration_days": 30
+    },
+    "prod": {
+        "app_name": "eltler",
+        "loglevel": "INFO",
+        "max_retries": 3,
+        "image_expiration_days": 7,
+        "userinfo_expiration_days": 365
+    }
+}

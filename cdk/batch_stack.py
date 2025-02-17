@@ -1,24 +1,17 @@
 import aws_cdk.aws_lambda_event_sources as eventsources
-from aws_cdk import (
-    Duration,
-    Stack,
-    aws_lambda,
-)
-from aws_cdk import (
-    aws_sns as sns,
-)
-from aws_cdk import (
-    aws_sns_subscriptions as subs,
-)
-from aws_cdk import (
-    aws_sqs as sqs,
-)
+from aws_cdk import Duration, aws_lambda
+from aws_cdk import aws_sns as sns
+from aws_cdk import aws_sns_subscriptions as subs
+from aws_cdk import aws_sqs as sqs
 from constructs import Construct
 
+from cdk.common_resource_stack import CommonResourceStack
+from cdk.defs import BaseStack
 
-class BatchStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+
+class BatchStack(BaseStack):
+    def __init__(self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs) -> None:
+        super().__init__(scope, construct_id, common_resource=common_resource, **kwargs)
 
         queue = sqs.Queue(
             self,
