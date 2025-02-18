@@ -21,5 +21,8 @@
     "github.copilot.enable": {
         "*": true,
         "properties": false
+    },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff"
     }
 }

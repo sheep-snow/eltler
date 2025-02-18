@@ -17,7 +17,6 @@ class CommonResourceStack(Stack):
     cidr: str
     vpc_mask: str
     max_capacity: int
-    ecr_image_tag: str
     image_expiration_days: int
     userinfo_expiration_days: int
     aws_account: str
@@ -25,7 +24,6 @@ class CommonResourceStack(Stack):
     loglevel: str
     max_retries: int
     secret_name: str
-    ecr_image_tag: str
 
     def __init__(self, scope: Construct, construct_id: str, context_json: dict, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -37,7 +35,6 @@ class CommonResourceStack(Stack):
         self.cidr = env_vars.get("vpc-cidr")
         self.vpc_mask = env_vars.get("vpc-cidr")
         self.max_capacity = int(env_vars.get("max_capacity"))
-        self.ecr_image_tag = env_vars.get("ecr_image_tag")
         self.app_name = env_vars.get("app_name")
         self.max_retries = int(env_vars.get("max_retries"))
         self.secret_name = f"{self.app_name}-secrets-{self.stage}".lower()
@@ -141,4 +138,3 @@ class CommonResourceStack(Stack):
             lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(self.userinfo_expiration_days))],
             encryption=s3.BucketEncryption.S3_MANAGED,
         )
-

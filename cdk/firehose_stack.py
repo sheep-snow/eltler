@@ -1,8 +1,6 @@
-import cmd
 
-from aws_cdk import App, CfnOutput, Duration, RemovalPolicy, Stack
+from aws_cdk import CfnOutput
 from aws_cdk import aws_ec2 as ec2
-from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_ecs_patterns as ecs_patterns
 from aws_cdk.aws_ecr_assets import DockerImageAsset, DockerImageAssetInvalidationOptions

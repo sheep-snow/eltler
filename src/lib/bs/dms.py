@@ -1,4 +1,4 @@
-from atproto import Client, IdResolver, models
+from atproto import IdResolver
 
 
 def get_unread_dms(client) -> None:

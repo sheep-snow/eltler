@@ -10,7 +10,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
                 // "AWS_PROFILE": "set your aws cli profile.",
-                "SECRET_NAME": "eltler-secrets-dev"
+                "SECRET_NAME": "wmput-secrets-dev"
             }
         },
         {

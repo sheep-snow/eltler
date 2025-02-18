@@ -16,7 +16,7 @@ class Settings:
     LOGLEVEL: int
     TIMEZONE: str
     FERNET_KEY: str
-    '''A URL-safe base64-encoded 32-byte key. Use Fernet.generate_key().decode() to generate a new key.'''
+    """A URL-safe base64-encoded 32-byte key. Use Fernet.generate_key().decode() to generate a new key."""
     BOT_USERID: str
     BOT_APP_PASSWORD: str
 
@@ -32,7 +32,7 @@ class Settings:
         self.FERNET_KEY = _secrets.get("fernet_key")
         self.BOT_USERID = _secrets.get("bot_userid")
         self.BOT_APP_PASSWORD = _secrets.get("bot_app_password")
-        self.APP_NAME = os.getenv("APP_NAME", default="eltler")
+        self.APP_NAME = os.getenv("APP_NAME", default="wmput")
         self.LOGLEVEL = INFO if self.STAGE.lower == "prod" else DEBUG
         self.STAGE = os.getenv("STAGE", default="dev")
         self.SRC_VERSION = self._get_src_version()
@@ -41,9 +41,7 @@ class Settings:
     def _get_src_version(self) -> str:
         """ソースコードのcommit hashをバージョンとして取得する"""
         try:
-            revparsed: str = subprocess.check_output(
-                "git rev-parse --short HEAD"
-            ).decode("utf-8")
+            revparsed: str = subprocess.check_output("git rev-parse --short HEAD").decode("utf-8")
             return revparsed.strip()
         except BaseException:
             return "0.0.0"

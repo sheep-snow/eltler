@@ -1,4 +1,4 @@
-from aws_cdk import Aws, Stack, Tags
+from aws_cdk import Stack, Tags
 from aws_cdk import aws_secretsmanager as _sm
 from constructs import Construct
 

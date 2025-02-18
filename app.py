@@ -4,7 +4,6 @@ import os
 import aws_cdk as cdk
 from aws_cdk import Environment
 
-from cdk import firehose_stack
 from cdk.api_stack import ApiStack
 from cdk.common_resource_stack import CommonResourceStack
 from cdk.firehose_stack import FirehoseStack

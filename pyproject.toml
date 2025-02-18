@@ -1,7 +1,7 @@
 [project]
-name = "eltler"
+name = "wmput"
 version = "0.1.0"
-description = ""
+description = "Bot for Bluesky that adds watermarks to posted illustrations and replaces them with reposts."
 authors = [
     {name = "sheep-snow",email = "user.email=71830342+sheep-snow@users.noreply.github.com"}
 ]
