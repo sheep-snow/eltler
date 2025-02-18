@@ -2,6 +2,7 @@
     "recommendations": [
         "EditorConfig.EditorConfig",
         "streetsidesoftware.code-spell-checker",
-        "charliermarsh.ruff"
+        "charliermarsh.ruff",
+        "hediet.vscode-drawio"
     ]
 }

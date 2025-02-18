@@ -5,11 +5,12 @@
             "name": "Debug App",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/hello.py",
+            "program": "${workspaceFolder}/src/firehose/listener.py",
             "args": [],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
                 // "AWS_PROFILE": "set your aws cli profile.",
+                "SECRET_NAME": "wmput-secrets-dev"
             }
         },
         {

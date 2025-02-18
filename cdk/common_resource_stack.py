@@ -1,6 +1,5 @@
 import json
 from logging import DEBUG
-from tabnanny import check
 
 import boto3
 from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
@@ -15,15 +14,16 @@ class CommonResourceStack(Stack):
 
     stage: str
     env_vars: str
-    app_name: str
+    cidr: str
+    vpc_mask: str
+    max_capacity: int
     image_expiration_days: int
     userinfo_expiration_days: int
     aws_account: str
     app_name:str
     loglevel: str
     max_retries: int
-    image_expiration_days: int
-    userinfo_expiration_days: int
+    secret_name: str
 
     def __init__(self, scope: Construct, construct_id: str, context_json: dict, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -32,8 +32,12 @@ class CommonResourceStack(Stack):
         self.stage = self.node.try_get_context("env")
         env_vars = self.node.try_get_context(self.stage)
         self.loglevel = env_vars.get("loglevel", DEBUG)
+        self.cidr = env_vars.get("vpc-cidr")
+        self.vpc_mask = env_vars.get("vpc-cidr")
+        self.max_capacity = int(env_vars.get("max_capacity"))
         self.app_name = env_vars.get("app_name")
         self.max_retries = int(env_vars.get("max_retries"))
+        self.secret_name = f"{self.app_name}-secrets-{self.stage}".lower()
         self.image_expiration_days = int(env_vars.get("image_expiration_days"))
         self.userinfo_expiration_days = int(env_vars.get("userinfo_expiration_days"))
         # リソースの作成
@@ -134,4 +138,3 @@ class CommonResourceStack(Stack):
             lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(self.userinfo_expiration_days))],
             encryption=s3.BucketEncryption.S3_MANAGED,
         )
-
