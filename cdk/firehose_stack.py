@@ -19,7 +19,7 @@ class FirehoseStack(BaseStack):
 
     def create_ecs_service(self):
         # Create a cluster
-        vpc_name = f"{self.stack_name}-{self.common_resource.stage}-vpc"
+        vpc_name = f"{self.common_resource.app_name}-{self.common_resource.stage}-vpc"
         vpc = ec2.Vpc(
             self,
             id=vpc_name,
@@ -36,11 +36,11 @@ class FirehoseStack(BaseStack):
             ],
         )
         # Create Fargate Cluster
-        cluster_name = f"{self.stack_name}-{self.common_resource.stage}-cluster"
+        cluster_name = f"{self.common_resource.app_name}-{self.common_resource.stage}-cluster"
         cluster = ecs.Cluster(self, cluster_name, cluster_name=cluster_name, vpc=vpc)
 
         # Create Fargate Service
-        service_name = f"{self.stack_name}-{self.common_resource.stage}-service"
+        service_name = f"{self.common_resource.app_name}-{self.common_resource.stage}-service"
         fargate_service = ecs_patterns.NetworkLoadBalancedFargateService(
             self,
             service_name,

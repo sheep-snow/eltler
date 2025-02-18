@@ -25,6 +25,7 @@ The application part is a Lambda function or ECS service written in python and d
 $ poetry install
 $ poetry run npx cdk bootstrap --profile default
 $ poetry run npx cdk synth --profile default -c env=dev --all
+$ poetry run npx cdk deploy --profile default -c env=dev --all
 
 # deploy each Stack
 $ poetry run npx cdk deploy wmput-CommonResourceStack-dev -c env=dev
