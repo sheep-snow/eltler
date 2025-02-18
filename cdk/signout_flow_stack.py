@@ -11,7 +11,9 @@ from cdk.defs import BaseStack
 
 
 class SignoutFlowStack(BaseStack):
-    def __init__(self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, common_resource=common_resource, **kwargs)
         self.cronrule = self.create_eventbridge_cron_rule()
         self.executor_lambda = self.create_executor_lambda()
@@ -31,38 +33,36 @@ class SignoutFlowStack(BaseStack):
 
     def create_workflow(self, getter_lambda, notifier_lambda):
         # Lambdaタスク定義
-        getter_task = tasks.LambdaInvoke(self, "getter", lambda_function=self.getter_lambda, output_path="$.Payload")
-        notifier_task = tasks.LambdaInvoke(self, "notifier", lambda_function=self.notifier_lambda, output_path="$.Payload")
+        getter_task = tasks.LambdaInvoke(
+            self, "getter", lambda_function=self.getter_lambda, output_path="$.Payload"
+        )
+        notifier_task = tasks.LambdaInvoke(
+            self, "notifier", lambda_function=self.notifier_lambda, output_path="$.Payload"
+        )
 
         # Mapステート定義
-        map_state = sfn.Map(
-            self, "MapState",
-            items_path="$.items"  # JSON配列を受け取る
+        map_state = sfn.DistributedMap(
+            self,
+            "MapState",
+            items_path=sfn.JsonPath.string_at("$.items"),  # JSON配列を受け取る
         )
-        map_state.iterator(getter_task.next(notifier_task))
+        map_state.item_processor(getter_task.next(notifier_task))
 
         # Waitステート
-        wait_state = sfn.Wait(
-            self, "WaitState",
-            time=sfn.WaitTime.seconds_path("$.waitSeconds")
-        )
+        wait_state = sfn.Wait(self, "WaitState", time=sfn.WaitTime.seconds_path("$.waitSeconds"))
 
         # ステートマシンの定義
         definition = wait_state.next(map_state)
         return sfn.StateMachine(
-            self, "SignoutFlow",
-            definition=definition,
-            timeout=Duration.minutes(5)
+            self,
+            "SignoutFlow",
+            definition_body=sfn.DefinitionBody.from_chainable(definition),
+            timeout=Duration.minutes(5),
         )
-
 
     def create_eventbridge_cron_rule(self) -> events.Rule:
         rule = events.Rule(
-            self, "EveryMinuteRule",
-            schedule=events.Schedule.cron(
-                minute="*/1",
-                hour="*"
-            )
+            self, "EveryMinuteRule", schedule=events.Schedule.cron(minute="*/1", hour="*")
         )
         self._add_common_tags(rule)
         return rule

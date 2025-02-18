@@ -10,17 +10,18 @@ from cryptography.fernet import Fernet
 
 
 class CommonResourceStack(Stack):
-    '''共通リソース'''
+    """共通リソース"""
 
     stage: str
     env_vars: str
     cidr: str
-    vpc_mask: str
+    vpc_mask: int
+    vpc_cidr: str
     max_capacity: int
     image_expiration_days: int
     userinfo_expiration_days: int
     aws_account: str
-    app_name:str
+    app_name: str
     loglevel: str
     max_retries: int
     secret_name: str
@@ -33,7 +34,8 @@ class CommonResourceStack(Stack):
         env_vars = self.node.try_get_context(self.stage)
         self.loglevel = env_vars.get("loglevel", DEBUG)
         self.cidr = env_vars.get("vpc-cidr")
-        self.vpc_mask = env_vars.get("vpc-cidr")
+        self.vpc_cidr = env_vars.get("vpc-cidr")
+        self.vpc_mask = int(env_vars.get("vpc-mask"))
         self.max_capacity = int(env_vars.get("max_capacity"))
         self.app_name = env_vars.get("app_name")
         self.max_retries = int(env_vars.get("max_retries"))
@@ -47,16 +49,13 @@ class CommonResourceStack(Stack):
         self.create_userinfo_bucket()
 
     def _get_exists_secret_manager(self, secret_id):
-        '''シークレットマネージャーが既存の場合はリソースを取得する'''
+        """シークレットマネージャーが既存の場合はリソースを取得する"""
         try:
             return secretsmanager.Secret.from_secret_name_v2(
-                scope=self,
-                id=secret_id,
-                secret_name=secret_id
+                scope=self, id=secret_id, secret_name=secret_id
             )
         except Exception:
             return None
-
 
     def check_secret_exists(self, secret_name: str) -> bool:
         """Secrets Manager にシークレットが存在するかチェック"""
@@ -68,7 +67,7 @@ class CommonResourceStack(Stack):
             return False
 
     def create_secret_manager(self):
-        '''既存のシークレットがあれば取得し、なければ作成する'''
+        """既存のシークレットがあれば取得し、なければ作成する"""
         secret_id = f"{self.app_name}-secrets-{self.stage}".lower()
         if self.check_secret_exists(secret_id):
             # 既存のシークレットを取得
@@ -78,11 +77,13 @@ class CommonResourceStack(Stack):
             CfnOutput(self, "SecretExists", value=f"Using existing secret: {secret_id}")
         else:
             # 既存のシークレットがない場合のみ新規作成
-            default_secret = json.dumps({
-                "fernet_key": Fernet.generate_key().decode(),
-                "bot_userid": "?????.bsky.social",
-                "bot_app_password": "somepassword",
-            })
+            default_secret = json.dumps(
+                {
+                    "fernet_key": Fernet.generate_key().decode(),
+                    "bot_userid": "?????.bsky.social",
+                    "bot_app_password": "somepassword",
+                }
+            )
             self.secret = secretsmanager.Secret(
                 self,
                 secret_id,
@@ -90,44 +91,52 @@ class CommonResourceStack(Stack):
                 description="A secret for storing credentials",
                 removal_policy=RemovalPolicy.RETAIN,
                 generate_secret_string=secretsmanager.SecretStringGenerator(
-                    secret_string_template=default_secret,
-                    generate_string_key="password"
-                )
+                    secret_string_template=default_secret, generate_string_key="password"
+                ),
             )
             CfnOutput(self, "SecretCreated", value=f"Created new secret: {secret_id}")
 
-
     def create_original_image_bucket(self):
-        '''オリジナル画像用バケットの作成'''
-        original_bucket_id = f"{self.app_name}-original-imgs-{self.stage}-{self.aws_account}".lower()
+        """オリジナル画像用バケットの作成"""
+        original_bucket_id = (
+            f"{self.app_name}-original-imgs-{self.stage}-{self.aws_account}".lower()
+        )
         self.org_image_bucket = s3.Bucket(
             scope=self,
             id=original_bucket_id,
             bucket_name=original_bucket_id,
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
-            lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(self.image_expiration_days))],
+            lifecycle_rules=[
+                s3.LifecycleRule(expiration=Duration.days(self.image_expiration_days))
+            ],
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             encryption=s3.BucketEncryption.S3_MANAGED,
         )
 
     def create_transformed_image_bucket(self):
-        '''加工済画像用バケットの作成'''
-        transformed_bucket_id = f"{self.app_name}-watermarked-imgs-{self.stage}-{self.aws_account}".lower()
+        """加工済画像用バケットの作成"""
+        transformed_bucket_id = (
+            f"{self.app_name}-watermarked-imgs-{self.stage}-{self.aws_account}".lower()
+        )
         self.org_image_bucket = s3.Bucket(
             scope=self,
             id=transformed_bucket_id,
             bucket_name=transformed_bucket_id,
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
-            lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(self.image_expiration_days))],
+            lifecycle_rules=[
+                s3.LifecycleRule(expiration=Duration.days(self.image_expiration_days))
+            ],
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             encryption=s3.BucketEncryption.S3_MANAGED,
         )
 
     def create_userinfo_bucket(self):
-        '''ユーザバケットの作成'''
-        userinfo_bucket_id = f"{self.app_name}-userinfo-files-{self.stage}-{self.aws_account}".lower()
+        """ユーザバケットの作成"""
+        userinfo_bucket_id = (
+            f"{self.app_name}-userinfo-files-{self.stage}-{self.aws_account}".lower()
+        )
         self.org_image_bucket = s3.Bucket(
             scope=self,
             id=userinfo_bucket_id,
@@ -135,6 +144,8 @@ class CommonResourceStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(self.userinfo_expiration_days))],
+            lifecycle_rules=[
+                s3.LifecycleRule(expiration=Duration.days(self.userinfo_expiration_days))
+            ],
             encryption=s3.BucketEncryption.S3_MANAGED,
         )
