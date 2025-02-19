@@ -10,7 +10,7 @@ from cdk.common_resource_stack import CommonResourceStack
 from cdk.defs import BaseStack
 
 
-class WatermarkingFlowStack(BaseStack):
+class SetWatermarkImgStack(BaseStack):
     def __init__(self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs) -> None:
         super().__init__(scope, construct_id, common_resource=common_resource, **kwargs)
         self.cronrule = self.create_eventbridge_cron_rule()
