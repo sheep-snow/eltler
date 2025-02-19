@@ -11,10 +11,13 @@ from cdk.defs import BaseStack
 
 
 class FollowFlowStack(BaseStack):
-    def __init__(self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, common_resource=common_resource, **kwargs)
         self.cronrule = self.create_eventbridge_cron_rule()
         self.executor_lambda = self.create_executor_lambda()
+        self.common_resource.followed_queue.grant_send_messages(self.executor_lambda)
         self.getter_lambda = self.create_getter_lambda()
         self.notifier_lambda = self.create_notifier_lambda()
         self.sm_resource = self._get_secrets_manager_resource(common_resource.secret.secret_name)
@@ -31,7 +34,9 @@ class FollowFlowStack(BaseStack):
 
     def create_workflow(self, getter_lambda, notifier_lambda) -> sfn.StateMachine:
         # Lambdaタスク定義
-        getter_task = tasks.LambdaInvoke(self, "getter", lambda_function=self.getter_lambda, output_path="$.Payload")
+        getter_task = tasks.LambdaInvoke(
+            self, "getter", lambda_function=self.getter_lambda, output_path="$.Payload"
+        )
         notifier_task = tasks.LambdaInvoke(
             self, "notifier", lambda_function=self.notifier_lambda, output_path="$.Payload"
         )
@@ -57,13 +62,17 @@ class FollowFlowStack(BaseStack):
         )
 
     def create_eventbridge_cron_rule(self) -> events.Rule:
-        rule = events.Rule(self, "EveryMinuteRule", schedule=events.Schedule.cron(minute="*/1", hour="*"))
+        rule = events.Rule(
+            self, "EveryMinuteRule", schedule=events.Schedule.cron(minute="*/1", hour="*")
+        )
         self._add_common_tags(rule)
         return rule
 
     def create_executor_lambda(self) -> _lambda.DockerImageFunction:
         name: str = f"{self.stack_name}-signup-executor"
-        code = _lambda.DockerImageCode.from_image_asset(directory=".", cmd=["signup.executor.handler"])
+        code = _lambda.DockerImageCode.from_image_asset(
+            directory=".", cmd=["signup.executor.handler"]
+        )
         func = _lambda.DockerImageFunction(
             scope=self,
             id=name.lower(),
@@ -79,7 +88,9 @@ class FollowFlowStack(BaseStack):
 
     def create_getter_lambda(self) -> _lambda.DockerImageFunction:
         name: str = f"{self.stack_name}-signup-getter"
-        code = _lambda.DockerImageCode.from_image_asset(directory=".", cmd=["signup.getter.handler"])
+        code = _lambda.DockerImageCode.from_image_asset(
+            directory=".", cmd=["signup.getter.handler"]
+        )
         func = _lambda.DockerImageFunction(
             scope=self,
             id=name.lower(),
@@ -95,7 +106,9 @@ class FollowFlowStack(BaseStack):
 
     def create_notifier_lambda(self) -> _lambda.DockerImageFunction:
         name: str = f"{self.stack_name}-signup-notifier"
-        code = _lambda.DockerImageCode.from_image_asset(directory=".", cmd=["signup.notifier.handler"])
+        code = _lambda.DockerImageCode.from_image_asset(
+            directory=".", cmd=["signup.notifier.handler"]
+        )
         func = _lambda.DockerImageFunction(
             scope=self,
             id=name.lower(),

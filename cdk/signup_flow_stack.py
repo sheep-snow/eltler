@@ -31,6 +31,9 @@ class SignupFlowStack(BaseStack):
         # step functionの作成
         self.flow = self.create_workflow(self.getter_lambda, self.notifier_lambda)
 
+        # executor lambdaをEventBridgeのターゲットに追加
+        self.cronrule.add_target(targets.LambdaFunction(self.executor_lambda))
+
     def create_workflow(self, getter_lambda, notifier_lambda) -> sfn.StateMachine:
         # Lambdaタスク定義
         getter_task = tasks.LambdaInvoke(
@@ -61,14 +64,15 @@ class SignupFlowStack(BaseStack):
         )
 
     def create_eventbridge_cron_rule(self) -> events.Rule:
+        event_name = f"{self.common_resource.app_name}-signup-executor-{self.common_resource.stage}"
         rule = events.Rule(
-            self, "EveryMinuteRule", schedule=events.Schedule.cron(minute="*/1", hour="*")
+            self, event_name, schedule=events.Schedule.cron(minute="*/5", hour="*"), enabled=False
         )
         self._add_common_tags(rule)
         return rule
 
     def create_executor_lambda(self) -> _lambda.DockerImageFunction:
-        name: str = f"{self.stack_name}-signup-executor"
+        name: str = f"{self.common_resource.app_name}-signup-executor-{self.common_resource.stage}"
         code = _lambda.DockerImageCode.from_image_asset(
             directory=".", cmd=["signup.executor.handler"]
         )
@@ -79,14 +83,14 @@ class SignupFlowStack(BaseStack):
             code=code,
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
-                "MAX_RETRIES": str(self.common_resource.max_retries),
+                "SECRET_NAME": self.common_resource.secret.secret_name,
             },
         )
         self._add_common_tags(func)
         return func
 
     def create_getter_lambda(self) -> _lambda.DockerImageFunction:
-        name: str = f"{self.stack_name}-signup-getter"
+        name: str = f"{self.common_resource.app_name}-signup-getter-{self.common_resource.stage}"
         code = _lambda.DockerImageCode.from_image_asset(
             directory=".", cmd=["signup.getter.handler"]
         )
@@ -97,14 +101,14 @@ class SignupFlowStack(BaseStack):
             code=code,
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
-                "MAX_RETRIES": str(self.common_resource.max_retries),
+                "SECRET_NAME": self.common_resource.secret.secret_name,
             },
         )
         self._add_common_tags(func)
         return func
 
     def create_notifier_lambda(self) -> _lambda.DockerImageFunction:
-        name: str = f"{self.stack_name}-signup-notifier"
+        name: str = f"{self.common_resource.app_name}-signup-notifier-{self.common_resource.stage}"
         code = _lambda.DockerImageCode.from_image_asset(
             directory=".", cmd=["signup.notifier.handler"]
         )
@@ -115,7 +119,7 @@ class SignupFlowStack(BaseStack):
             code=code,
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
-                "MAX_RETRIES": str(self.common_resource.max_retries),
+                "SECRET_NAME": self.common_resource.secret.secret_name,
             },
         )
         self._add_common_tags(func)

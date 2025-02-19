@@ -29,8 +29,8 @@ from lib.log import logger
 from settings import settings
 
 _INTERESTED_RECORDS = {
-    models.ids.AppBskyFeedPost: models.AppBskyFeedPost,  # Posts
-    models.ids.AppBskyGraphFollow: models.AppBskyGraphFollow,  # Follows
+    # models.ids.AppBskyGraphFollow: models.AppBskyGraphFollow,  # Follows
+    models.ids.AppBskyFeedPost: models.AppBskyFeedPost  # Posts
 }
 
 sqs_client: boto3.client = None
@@ -49,6 +49,9 @@ MEASURE_EVENT_INTERVAL_SECS = 10
 
 current_followers = set()
 """listener稼働中を通じて更新され続けるフォロワー"""
+
+pool = None
+"""multiprocessing.Pool object"""
 
 
 def on_callback_error_handler(error: BaseException) -> None:
@@ -163,24 +166,24 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
 
         ops = _get_ops_by_type(commit)
 
-        # for created_post in ops[models.ids.AppBskyFeedPost]["created"]:
-        #     # TODO implement it
-        #     # https://atproto.blue/en/latest/atproto/atproto_client.models.app.bsky.feed.post.html
-        #     record = created_post["record"]
-        #     if _is_watermarking_post(record) is False:
-        #         continue
-        #     sqs_client.send_message(
-        #         QueueUrl="https://sqs.ap-south-1.amazonaws.com/123456789012/MyQueue",
-        #         MessageBody=json.dumps(
-        #             {
-        #                 "cid": created_post["cid"],
-        #                 "uri": created_post["uri"],
-        #                 "author_did": created_post["author"],
-        #                 "created_at": record.created_at,
-        #                 "image_url": record.embed.image.url,
-        #             }
-        #         ),
-        #     )
+        for created_post in ops[models.ids.AppBskyFeedPost]["created"]:
+            # TODO implement it
+            # https://atproto.blue/en/latest/atproto/atproto_client.models.app.bsky.feed.post.html
+            record = created_post["record"]
+            if _is_watermarking_post(record) is False:
+                continue
+            sqs_client.send_message(
+                QueueUrl="https://sqs.ap-south-1.amazonaws.com/123456789012/MyQueue",
+                MessageBody=json.dumps(
+                    {
+                        "cid": created_post["cid"],
+                        "uri": created_post["uri"],
+                        "author_did": created_post["author"],
+                        "created_at": record.created_at,
+                        "image_url": record.embed.image.url,
+                    }
+                ),
+            )
 
         # for follow in ops[models.ids.AppBskyGraphFollow]["created"]:
         #     # TODO implement it
@@ -240,7 +243,8 @@ def measure_events_per_interval(func: callable) -> callable:
         cur_time = time.time()
 
         if cur_time - wrapper.start_time >= MEASURE_EVENT_INTERVAL_SECS:
-            logger.info(f"NETWORK LOAD: {wrapper.calls} events/second")
+            rate = int(wrapper.calls / MEASURE_EVENT_INTERVAL_SECS)
+            logger.info(f"NETWORK LOAD: {rate} events/second")
             wrapper.start_time = cur_time
             wrapper.calls = 0
 
@@ -289,16 +293,14 @@ def get_followers() -> set:
     return {f.did for f in followers}
 
 
-if __name__ == "__main__":
+def main():
     logger.info("Starting listener...")
     logger.info("Press Ctrl+C to stop the listener.")
     current_followers = get_followers()
     logger.info("Got current followers successfully.")
     sqs_client = get_sqs_client()
     signal.signal(signal.SIGINT, signal_handler)
-
     start_cursor = None
-
     params = None
     cursor = multiprocessing.Value("i", 0)
     if start_cursor is not None:
@@ -325,3 +327,7 @@ if __name__ == "__main__":
         queue.put(message)
 
     sqs_client.start(on_message_handler, on_callback_error_handler)
+
+
+if __name__ == "__main__":
+    main()

@@ -45,8 +45,8 @@ async def main() -> None:
             # mark notifications as processed (isRead=True)
             await async_client.app.bsky.notification.update_seen({"seen_at": last_seen_at})
             print("Successfully process notification. Last seen at:", last_seen_at)
-
-            await asyncio.sleep(FETCH_NOTIFICATIONS_DELAY_SEC)
+            break
+            # await asyncio.sleep(FETCH_NOTIFICATIONS_DELAY_SEC)
 
     # run our notification listener and register the callback on notification
     await asyncio.ensure_future(listen_for_notifications(on_notification_callback))
