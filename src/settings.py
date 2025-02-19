@@ -18,7 +18,9 @@ class Settings:
     FERNET_KEY: str
     """A URL-safe base64-encoded 32-byte key. Use Fernet.generate_key().decode() to generate a new key."""
     BOT_USERID: str
+    """Bluesky Bot User Handle"""
     BOT_APP_PASSWORD: str
+    """Bluesky Bot App Password"""
 
     def __new__(cls, *args, **kargs):
         """Singletonパターン"""
@@ -28,14 +30,15 @@ class Settings:
 
     def __init__(self):
         """設定を読み込む"""
-        _secrets = get_secret(f"{os.getenv('')}")
+        _secrets = get_secret(f"{os.getenv('SECRET_NAME')}")
         self.FERNET_KEY = _secrets.get("fernet_key")
         self.BOT_USERID = _secrets.get("bot_userid")
         self.BOT_APP_PASSWORD = _secrets.get("bot_app_password")
         self.APP_NAME = os.getenv("APP_NAME", default="wmput")
-        self.LOGLEVEL = INFO if self.STAGE.lower == "prod" else DEBUG
         self.STAGE = os.getenv("STAGE", default="dev")
+        self.LOGLEVEL = INFO if self.STAGE.lower == "prod" else DEBUG
         self.SRC_VERSION = self._get_src_version()
+        self.TIMEZONE = os.getenv("TIMEZONE", default="Asia/Tokyo")
         print(f"Application Version: {self.SRC_VERSION}")
 
     def _get_src_version(self) -> str:

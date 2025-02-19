@@ -28,11 +28,10 @@ def get_secret(secret_name: Optional[str] = None) -> Any:
         raise SecretNameIsEmptyError("secret_name `secret_name` is invalid.")
     sn = secret_name
     logger.debug(f"Getting secret_name: `{sn}`")
-    region_name = os.getenv("AWS_REGION_NAME", default="ap-northeast-1")
 
     # Create a Secrets Manager client
     session = Session()
-    client = session.client(service_name="secretsmanager", region_name=region_name)
+    client = session.client(service_name="secretsmanager", region_name=os.getenv("AWS_REGION"))
 
     # In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
     # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html

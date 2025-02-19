@@ -33,7 +33,7 @@ class CommonResourceStack(Stack):
     userinfo_bucket: s3.IBucket
     followed_queue: sqs.IQueue
     set_watermark_img_queue: sqs.IQueue
-    watermarking_quque: sqs.IQueue
+    watermarking_queue: sqs.IQueue
 
     def __init__(self, scope: Construct, construct_id: str, context_json: dict, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -58,7 +58,7 @@ class CommonResourceStack(Stack):
         self.userinfo_bucket = self.create_userinfo_bucket()
         self.followed_queue = self.create_followed_queue()
         self.set_watermark_img_queue = self.create_set_watermark_img_queue()
-        self.watermarking_quque = self.create_watermarking_quque()
+        self.watermarking_queue = self.create_watermarking_quque()
 
     def _get_exists_secret_manager(self, secret_id):
         """シークレットマネージャーが既存の場合はリソースを取得する"""

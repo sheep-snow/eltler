@@ -5,14 +5,14 @@ from aws_cdk import aws_ecs_patterns as ecs_patterns
 from aws_cdk.aws_ecr_assets import DockerImageAsset, DockerImageAssetInvalidationOptions
 from constructs import Construct
 
+# from aws_cdk.aws_ecs_patterns import FargateServiceBaseProps
+
 from cdk.common_resource_stack import CommonResourceStack
 from cdk.defs import BaseStack
 
 
 class FirehoseStack(BaseStack):
-    def __init__(
-        self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs
-    ) -> None:
+    def __init__(self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs) -> None:
         super().__init__(scope, construct_id, common_resource=common_resource, **kwargs)
         self.image_asset = self.build_and_push_image()
         self.create_ecs_service()
@@ -29,9 +29,7 @@ class FirehoseStack(BaseStack):
             nat_gateways=0,
             subnet_configuration=[
                 ec2.SubnetConfiguration(
-                    name="public",
-                    subnet_type=ec2.SubnetType.PUBLIC,
-                    cidr_mask=self.common_resource.vpc_mask,
+                    name="public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=self.common_resource.vpc_mask
                 )
             ],
         )
@@ -45,17 +43,34 @@ class FirehoseStack(BaseStack):
             self,
             service_name,
             cluster=cluster,
-            task_image_options=ecs_patterns.NetworkLoadBalancedTaskImageOptions(
+            # task_image_options=ecs_patterns.NetworkLoadBalancedTaskImageOptions(
+            #     image=ecs.ContainerImage.from_ecr_repository(
+            #         repository=self.image_asset.repository, tag=self.image_asset.image_tag
+            #     ),
+            #     environment={
+            #         "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
+            #         "SET_WATERMARK_IMG_QUEUE_URL": self.common_resource.followed_queue.queue_url,
+            #         "WATERMARKING_QUEUE_URL": self.common_resource.followed_queue.queue_url,
+            #     },
+            #     container_name="firehose",
+            #     secrets=self.common_resource.secret_manager,
+            #     execution_role=self.common_resource.ecs_task_execution_role,
+            #     task_role=self.common_resource.ecs_task_role,
+            # ),
+            task_image_options=ecs_patterns.FargateServiceBaseProps(
                 image=ecs.ContainerImage.from_ecr_repository(
                     repository=self.image_asset.repository, tag=self.image_asset.image_tag
-                )
-                # TODO add secrets
-                # container_name="firehose",
-                # execution_role=self.common_resource.ecs_task_execution_role,
-                # task_role=self.common_resource.ecs_task_role,
-                # secrets=None,
-                # environment=None,
-            ),
+                ),
+                environment={
+                    "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
+                    "SET_WATERMARK_IMG_QUEUE_URL": self.common_resource.followed_queue.queue_url,
+                    "WATERMARKING_QUEUE_URL": self.common_resource.followed_queue.queue_url,
+                },
+                container_name="firehose",
+                secrets=self.common_resource.secret_manager,
+                execution_role=self.common_resource.ecs_task_execution_role,
+                task_role=self.common_resource.ecs_task_role,
+            )
             platform_version=ecs.FargatePlatformVersion.LATEST,
             public_load_balancer=True,
             enable_execute_command=True,
@@ -68,9 +83,7 @@ class FirehoseStack(BaseStack):
         )
         scaling.scale_on_cpu_utilization("CpuScaling", target_utilization_percent=50)
 
-        CfnOutput(
-            self, "LoadBalancerDNS", value=fargate_service.load_balancer.load_balancer_dns_name
-        )
+        CfnOutput(self, "LoadBalancerDNS", value=fargate_service.load_balancer.load_balancer_dns_name)
 
     # def create_firehose_service_repo(self) -> ecr.Repository:
     #     repo_name = f'{self.common_resource.app_name}-firehose'
