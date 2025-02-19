@@ -23,3 +23,15 @@ def get_all_objects(bucket):
         continuation_token = res.get("NextContinuationToken")
         if continuation_token is None:
             break
+
+
+def put_object(bucket, key, body):
+    """Put object to the bucket"""
+    s3 = boto3.client("s3", region_name=os.getenv("AWS_REGION"))
+    s3.put_object(Bucket=bucket, Key=key, Body=body)
+
+
+def delete_object(bucket, key):
+    """Delete object from the bucket"""
+    s3 = boto3.client("s3", region_name=os.getenv("AWS_REGION"))
+    s3.delete_object(Bucket=bucket, Key=key)

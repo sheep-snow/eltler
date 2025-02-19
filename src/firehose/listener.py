@@ -34,7 +34,6 @@ _INTERESTED_RECORDS = {
 }
 
 sqs_client: boto3.client = None
-BOT_USER_DID = "did:at:bot:xxxxx.bsky.social"
 
 TAG_OF_SET_WATERMARK_IMG = "wmset"
 
@@ -42,7 +41,7 @@ FOLLOWED_QUEUE_URL = os.getenv("FOLLOWED_QUEUE_URL")
 SET_WATERMARK_IMG_QUEUE_URL = os.getenv("SET_WATERMARK_IMG_QUEUE_URL")
 WATERMARKING_QUEUE_URL = os.getenv("WATERMARKING_QUEUE_URL")
 
-FOLLOWED_LIST_UPDATE_INTERVAL_SECS = 180
+FOLLOWED_LIST_UPDATE_INTERVAL_SECS = 300
 """フォロワーテーブルを更新する間隔"""
 
 MEASURE_EVENT_INTERVAL_SECS = 10
@@ -308,8 +307,8 @@ if __name__ == "__main__":
 
     sqs_client = FirehoseSubscribeReposClient(params)
 
-    # workers_count = multiprocessing.cpu_count() * 2 - 1
-    workers_count = 1
+    workers_count = multiprocessing.cpu_count() * 2 - 1
+    # workers_count = 1 # DEBUG
     max_queue_size = 10000
 
     queue = multiprocessing.Queue(maxsize=max_queue_size)

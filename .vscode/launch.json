@@ -5,7 +5,9 @@
             "name": "Debug App",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/firehose/listener.py",
+            // "program": "${workspaceFolder}/src/lib/bs/notification_callback.py",
+            "program": "${workspaceFolder}/src/lib/bs/dms.py",
+            // "program": "${workspaceFolder}/src/firehose/listener.py",
             "args": [],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
