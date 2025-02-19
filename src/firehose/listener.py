@@ -12,21 +12,18 @@ from collections import defaultdict
 from types import FrameType
 from typing import Any
 
-from atproto import (
-    CAR,
-    AtUri,
-    FirehoseSubscribeReposClient,
-    firehose_models,
-    models,
-    parse_subscribe_repos_message,
-)
+import boto3
+from atproto import CAR, AtUri, FirehoseSubscribeReposClient, firehose_models, models, parse_subscribe_repos_message
 
+from lib.aws.sqs import get_sqs_client, send_message_to_queue
 from lib.log import logger
 
 _INTERESTED_RECORDS = {
     models.ids.AppBskyFeedPost: models.AppBskyFeedPost,  # Posts
     models.ids.AppBskyGraphFollow: models.AppBskyGraphFollow,  # Follows
 }
+
+sqs_client: boto3.client = None
 
 
 def on_callback_error_handler(error: BaseException) -> None:
@@ -70,9 +67,7 @@ def _get_ops_by_type(commit: models.ComAtprotoSyncSubscribeRepos.Commit) -> defa
             record = models.get_or_create(record_raw_data, strict=False)
             record_type = _INTERESTED_RECORDS.get(uri.collection)
             if record_type and models.is_record_type(record, record_type):
-                operation_by_type[uri.collection]["created"].append(
-                    {"record": record, **create_info}
-                )
+                operation_by_type[uri.collection]["created"].append({"record": record, **create_info})
 
         if op.action == "delete":
             operation_by_type[uri.collection]["deleted"].append({"uri": str(uri)})
@@ -111,9 +106,8 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
             record = created_post["record"]
             inlined_text = record.text.replace("\n", " ")
             # when a new post is captured
-            logger.info(
-                f"NEW POST [CREATED_AT={record.created_at}][AUTHOR={author}]: {inlined_text}"
-            )
+            logger.info(f"NEW POST [CREATED_AT={record.created_at}][AUTHOR={author}]: {inlined_text}")
+            sqs_client.send_message(QueueUrl=queue_url, MessageBody=message)
 
         for follow in ops[models.ids.AppBskyGraphFollow]["created"]:
             # TODO implement it
@@ -130,9 +124,7 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
             logger.info(f"NEW FOLLOW: {payload}")
 
 
-def get_firehose_params(
-    cursor_value: multiprocessing.Value,
-) -> models.ComAtprotoSyncSubscribeRepos.Params:
+def get_firehose_params(cursor_value: multiprocessing.Value) -> models.ComAtprotoSyncSubscribeRepos.Params:
     """Get firehose params
 
     Args:
@@ -173,12 +165,10 @@ def measure_events_per_second(func: callable) -> callable:
 
 def signal_handler(_: int, __: FrameType) -> None:
     """Signal handler"""
-    logger.info(
-        "Keyboard interrupt received. Waiting for the queue to empty before terminating processes..."
-    )
+    logger.info("Keyboard interrupt received. Waiting for the queue to empty before terminating processes...")
 
     # Stop receiving new messages
-    client.stop()
+    sqs_client.stop()
 
     # Drain the messages queue
     while not queue.empty():
@@ -196,6 +186,8 @@ def signal_handler(_: int, __: FrameType) -> None:
 
 if __name__ == "__main__":
     logger.info("Starting listener...")
+    logger.info("Press Ctrl+C to stop the listener")
+    sqs_client = get_sqs_client()
     signal.signal(signal.SIGINT, signal_handler)
 
     start_cursor = None
@@ -206,7 +198,7 @@ if __name__ == "__main__":
         cursor = multiprocessing.Value("i", start_cursor)
         params = get_firehose_params(cursor)
 
-    client = FirehoseSubscribeReposClient(params)
+    sqs_client = FirehoseSubscribeReposClient(params)
 
     # workers_count = multiprocessing.cpu_count() * 2 - 1
     workers_count = 1
@@ -220,8 +212,8 @@ if __name__ == "__main__":
         if cursor.value:
             # we are using updating the cursor state here because of multiprocessing
             # typically you can call client.update_params() directly on commit processing
-            client.update_params(get_firehose_params(cursor))
+            sqs_client.update_params(get_firehose_params(cursor))
 
         queue.put(message)
 
-    client.start(on_message_handler, on_callback_error_handler)
+    sqs_client.start(on_message_handler, on_callback_error_handler)

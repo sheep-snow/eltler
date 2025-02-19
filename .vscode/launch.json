@@ -9,8 +9,8 @@
             "args": [],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
-                // "AWS_PROFILE": "set your aws cli profile.",
-                "SECRET_NAME": "wmput-secrets-dev"
+                "SECRET_NAME": "wmput-secrets-dev",
+                "AWS_REGION": "ap-northeast-1",
             }
         },
         {
@@ -25,6 +25,8 @@
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
+                "SECRET_NAME": "wmput-secrets-dev",
+                "AWS_REGION": "ap-northeast-1",
             }
         },
         {
@@ -37,7 +39,9 @@
                 "check"
             ],
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}"
+                "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
+                "SECRET_NAME": "wmput-secrets-dev",
+                "AWS_REGION": "ap-northeast-1",
             }
         }
     ]
