@@ -21,6 +21,7 @@ class Settings:
     """Bluesky Bot User Handle"""
     BOT_APP_PASSWORD: str
     """Bluesky Bot App Password"""
+    FOLLOWED_QUEUE_URL: str
 
     def __new__(cls, *args, **kargs):
         """Singletonパターン"""
@@ -39,6 +40,7 @@ class Settings:
         self.LOGLEVEL = INFO if self.STAGE.lower == "prod" else DEBUG
         self.SRC_VERSION = self._get_src_version()
         self.TIMEZONE = os.getenv("TIMEZONE", default="Asia/Tokyo")
+        self.FOLLOWED_QUEUE_URL = os.getenv("FOLLOWED_QUEUE_URL")
         print(f"Application Version: {self.SRC_VERSION}")
 
     def _get_src_version(self) -> str:

@@ -75,16 +75,13 @@ class FirehoseStack(BaseStack):
             task_definition=task_definition,
             min_healthy_percent=100,
             capacity_provider_strategies=[
-                ecs.CapacityProviderStrategy(
-                    capacity_provider=cluster.default_capacity_provider.capacity_provider_name,
-                    weight=1,
-                )
+                ecs.CapacityProviderStrategy(capacity_provider="FARGATE_SPOT", weight=1)
             ],
-            security_group=sg,
+            security_groups=[sg],
             desired_count=1,
             assign_public_ip=True,
-            execution_role=self.common_resource.ecs_execution_role,
-            task_role=self.common_resource.ecs_task_role,
+            # execution_role=self.common_resource.ecs_execution_role,
+            # task_role=self.common_resource.ecs_task_role,
             enable_ecs_managed_tags=True,
             enable_execute_command=True,
         )

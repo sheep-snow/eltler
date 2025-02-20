@@ -52,7 +52,7 @@ class CommonResourceStack(Stack):
         self.max_capacity = int(env_vars.get("max_capacity"))
         self.app_name = env_vars.get("app_name")
         self.max_retries = int(env_vars.get("max_retries"))
-        self.secret_name = f"{self.app_name}-secrets-{self.stage}".lower()
+        self.secret_name = f"{self.app_name}-secretsmanager-{self.stage}".lower()
         self.image_expiration_days = int(env_vars.get("image_expiration_days"))
         self.userinfo_expiration_days = int(env_vars.get("userinfo_expiration_days"))
         # リソースの作成
@@ -86,7 +86,7 @@ class CommonResourceStack(Stack):
 
     def create_secret_manager(self):
         """既存のシークレットがあれば取得し、なければ作成する"""
-        secret_id = f"{self.app_name}-secrets-{self.stage}".lower()
+        secret_id = self.secret_name
         if self.check_secret_exists(secret_id):
             # 既存のシークレットを取得
             self.secret = secretsmanager.Secret.from_secret_name_v2(
@@ -174,7 +174,7 @@ class CommonResourceStack(Stack):
             self,
             f"{self.app_name}-followed-queue-{self.stage}",
             queue_name=f"{self.app_name}-followed-queue-{self.stage}",
-            visibility_timeout=Duration.seconds(300),
+            visibility_timeout=Duration.seconds(2),
             retention_period=Duration.days(14),
             encryption=sqs.QueueEncryption.KMS_MANAGED,
         )
@@ -185,7 +185,7 @@ class CommonResourceStack(Stack):
             self,
             f"{self.app_name}-set-watermark-img-queue-{self.stage}",
             queue_name=f"{self.app_name}-set-watermark-img-queue-{self.stage}",
-            visibility_timeout=Duration.seconds(300),
+            visibility_timeout=Duration.seconds(2),
             retention_period=Duration.days(14),
             encryption=sqs.QueueEncryption.KMS_MANAGED,
         )
@@ -196,7 +196,7 @@ class CommonResourceStack(Stack):
             self,
             f"{self.app_name}-watermarking-queue-{self.stage}",
             queue_name=f"{self.app_name}-watermarking-queue-{self.stage}",
-            visibility_timeout=Duration.seconds(300),
+            visibility_timeout=Duration.seconds(2),
             retention_period=Duration.days(14),
             encryption=sqs.QueueEncryption.KMS_MANAGED,
         )

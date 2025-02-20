@@ -18,5 +18,10 @@
     "vpc-cidr": "10.33.0.0/24",
     "vpc-mask": 26,
     "max_capacity": 1
-  }
+  },
+  "availability-zones:account=883877685752:region=ap-northeast-1": [
+    "ap-northeast-1a",
+    "ap-northeast-1c",
+    "ap-northeast-1d"
+  ]
 }

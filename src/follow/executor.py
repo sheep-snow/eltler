@@ -21,7 +21,7 @@ def handler(event, context):
         if not notification.is_read and notification.reason == "follow":
             try:
                 sqs_client.send_message(
-                    QueueUrl=settings.FOLLOW_QUEUE_URL,
+                    QueueUrl=settings.FOLLOWED_QUEUE_URL,
                     MessageBody={"follower": notification.author.did},
                 )
             except Exception:
@@ -34,4 +34,9 @@ def handler(event, context):
 
 
 if __name__ == "__main__":
-    print(handler({}, {}))
+    import os
+
+    os.environ["FOLLOWED_QUEUE_URL"] = (
+        "https://sqs.ap-northeast-1.amazonaws.com/883877685752/wmput-followed-queue-dev"
+    )
+    handler({}, {})

@@ -64,7 +64,9 @@ class SignupFlowStack(BaseStack):
         )
 
     def create_eventbridge_cron_rule(self) -> events.Rule:
-        event_name = f"{self.common_resource.app_name}-signup-executor-{self.common_resource.stage}"
+        event_name = (
+            f"{self.common_resource.app_name}-signup-executor-rule-{self.common_resource.stage}"
+        )
         rule = events.Rule(
             self, event_name, schedule=events.Schedule.cron(minute="*/5", hour="*"), enabled=False
         )

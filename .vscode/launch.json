@@ -5,13 +5,14 @@
             "name": "Debug App",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/lib/bs/notification.py",
+            // "program": "${workspaceFolder}/src/lib/bs/notification.py",
+            "program": "${file}",
             // "program": "${workspaceFolder}/src/lib/bs/dms.py",
             // "program": "${workspaceFolder}/src/firehose/listener.py",
             "args": [],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
-                "SECRET_NAME": "wmput-secrets-dev",
+                "SECRET_NAME": "wmput-secretsmanager-dev",
                 "AWS_REGION": "ap-northeast-1",
             }
         },
@@ -27,7 +28,7 @@
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
-                "SECRET_NAME": "wmput-secrets-dev",
+                "SECRET_NAME": "wmput-secretsmanager-dev",
                 "AWS_REGION": "ap-northeast-1",
             }
         },
@@ -42,7 +43,7 @@
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
-                "SECRET_NAME": "wmput-secrets-dev",
+                "SECRET_NAME": "wmput-secretsmanager-dev",
                 "AWS_REGION": "ap-northeast-1",
             }
         }

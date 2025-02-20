@@ -11,7 +11,9 @@ from cdk.defs import BaseStack
 
 
 class WatermarkingFlowStack(BaseStack):
-    def __init__(self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, common_resource=common_resource, **kwargs)
         self.cronrule = self.create_eventbridge_cron_rule()
         self.executor_lambda = self.create_executor_lambda()
@@ -31,7 +33,9 @@ class WatermarkingFlowStack(BaseStack):
 
     def create_workflow(self, getter_lambda, notifier_lambda) -> sfn.StateMachine:
         # Lambdaタスク定義
-        getter_task = tasks.LambdaInvoke(self, "getter", lambda_function=self.getter_lambda, output_path="$.Payload")
+        getter_task = tasks.LambdaInvoke(
+            self, "getter", lambda_function=self.getter_lambda, output_path="$.Payload"
+        )
         notifier_task = tasks.LambdaInvoke(
             self, "notifier", lambda_function=self.notifier_lambda, output_path="$.Payload"
         )
@@ -51,19 +55,23 @@ class WatermarkingFlowStack(BaseStack):
         definition = wait_state.next(map_state)
         return sfn.StateMachine(
             self,
-            "SignupFlow",
+            "watermarkingFlow",
             definition_body=sfn.DefinitionBody.from_chainable(definition),
             timeout=Duration.minutes(5),
         )
 
     def create_eventbridge_cron_rule(self) -> events.Rule:
-        rule = events.Rule(self, "EveryMinuteRule", schedule=events.Schedule.cron(minute="*/1", hour="*"))
+        rule = events.Rule(
+            self, "EveryMinuteRule", schedule=events.Schedule.cron(minute="*/1", hour="*")
+        )
         self._add_common_tags(rule)
         return rule
 
     def create_executor_lambda(self) -> _lambda.DockerImageFunction:
-        name: str = f"{self.stack_name}-signup-executor"
-        code = _lambda.DockerImageCode.from_image_asset(directory=".", cmd=["signup.executor.handler"])
+        name: str = f"{self.stack_name}-watermarking-executor"
+        code = _lambda.DockerImageCode.from_image_asset(
+            directory=".", cmd=["watermarking.executor.handler"]
+        )
         func = _lambda.DockerImageFunction(
             scope=self,
             id=name.lower(),
@@ -78,8 +86,10 @@ class WatermarkingFlowStack(BaseStack):
         return func
 
     def create_getter_lambda(self) -> _lambda.DockerImageFunction:
-        name: str = f"{self.stack_name}-signup-getter"
-        code = _lambda.DockerImageCode.from_image_asset(directory=".", cmd=["signup.getter.handler"])
+        name: str = f"{self.stack_name}-watermarking-getter"
+        code = _lambda.DockerImageCode.from_image_asset(
+            directory=".", cmd=["watermarking.getter.handler"]
+        )
         func = _lambda.DockerImageFunction(
             scope=self,
             id=name.lower(),
@@ -94,8 +104,10 @@ class WatermarkingFlowStack(BaseStack):
         return func
 
     def create_notifier_lambda(self) -> _lambda.DockerImageFunction:
-        name: str = f"{self.stack_name}-signup-notifier"
-        code = _lambda.DockerImageCode.from_image_asset(directory=".", cmd=["signup.notifier.handler"])
+        name: str = f"{self.stack_name}-watermarking-notifier"
+        code = _lambda.DockerImageCode.from_image_asset(
+            directory=".", cmd=["watermarking.notifier.handler"]
+        )
         func = _lambda.DockerImageFunction(
             scope=self,
             id=name.lower(),

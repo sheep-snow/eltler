@@ -69,9 +69,9 @@ class FollowFlowStack(BaseStack):
         return rule
 
     def create_executor_lambda(self) -> _lambda.DockerImageFunction:
-        name: str = f"{self.stack_name}-signup-executor"
+        name: str = f"{self.stack_name}-follow-executor"
         code = _lambda.DockerImageCode.from_image_asset(
-            directory=".", cmd=["signup.executor.handler"]
+            directory=".", cmd=["follow.executor.handler"]
         )
         func = _lambda.DockerImageFunction(
             scope=self,
@@ -81,6 +81,7 @@ class FollowFlowStack(BaseStack):
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "MAX_RETRIES": str(self.common_resource.max_retries),
+                "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
             },
         )
         self._add_common_tags(func)
@@ -99,6 +100,7 @@ class FollowFlowStack(BaseStack):
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "MAX_RETRIES": str(self.common_resource.max_retries),
+                "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
             },
         )
         self._add_common_tags(func)
