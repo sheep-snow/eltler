@@ -24,9 +24,8 @@ def handler(event, context):
         if not notification.is_read and notification.reason == "follow":
             logger.info(f"{len(response.notifications)} notifications found.")
             try:
-                response = sqs_client.send_message(
-                    QueueUrl=settings.FOLLOWED_QUEUE_URL,
-                    MessageBody=json.dumps(
+                body = (
+                    json.dumps(
                         {
                             "did": notification.author.did,
                             "handle": notification.author.handle,
@@ -41,8 +40,12 @@ def handler(event, context):
                         allow_nan=True,
                     ),
                 )
+
+                response = sqs_client.send_message(
+                    QueueUrl=settings.FOLLOWED_QUEUE_URL, MessageBody=body
+                )
                 logger.info(
-                    f"Message sent to SQS: did={notification.author.did}, message_id={response['MessageId']}"
+                    f"Message sent to SQS, message id: {response['MessageId']}, body: {body}"
                 )
             except Exception as e:
                 logger.warning(f"Failed to send message to SQS: {e}")
