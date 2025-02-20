@@ -21,10 +21,10 @@ def handler(event, context):
     response = client.app.bsky.notification.list_notifications()
     logger.info(f"{len(response.notifications)} notifications found.")
     for notification in response.notifications:
-        if notification.is_read and notification.reason == "follow":
+        if not notification.is_read and notification.reason == "follow":
             logger.info(f"{len(response.notifications)} notifications found.")
             try:
-                sqs_client.send_message(
+                response = sqs_client.send_message(
                     QueueUrl=settings.FOLLOWED_QUEUE_URL,
                     MessageBody=json.dumps(
                         {
@@ -40,6 +40,9 @@ def handler(event, context):
                         },
                         allow_nan=True,
                     ),
+                )
+                logger.info(
+                    f"Message sent to SQS: did={notification.author.did}, message_id={response['MessageId']}"
                 )
             except Exception as e:
                 logger.warning(f"Failed to send message to SQS: {e}")
