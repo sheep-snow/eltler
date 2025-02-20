@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e" pages="3">
     <diagram id="zBH2zvv99mnQwoewfwPP" name="1.follow">
-        <mxGraphModel dx="1181" dy="574" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1004" dy="488" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -87,17 +87,17 @@
                         <mxPoint x="94" y="501" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="3" style="edgeStyle=none;html=1;" edge="1" parent="1" source="2" target="xxtSfHxv2V-E8UYSFDy--36">
+                <mxCell id="3" style="edgeStyle=none;html=1;" parent="1" source="2" target="xxtSfHxv2V-E8UYSFDy--36" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="2" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;EventBridge Pipes&lt;/div&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eventbridge_pipes;" vertex="1" parent="1">
+                <mxCell id="2" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;EventBridge Pipes&lt;/div&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eventbridge_pipes;" parent="1" vertex="1">
                     <mxGeometry x="48" y="710" width="80" height="80" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
     <diagram id="ZOP575mnfubcYQVSe72Z" name="2.Signup">
-        <mxGraphModel dx="1141" dy="583" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+        <mxGraphModel dx="1004" dy="488" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -171,17 +171,23 @@
                 <mxCell id="zFOpr6AZm7Y6Rq78ZTZi-3" value="S3 Create Event Trigger" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.event_event_based;" parent="1" vertex="1">
                     <mxGeometry x="300" y="20" width="78" height="78" as="geometry"/>
                 </mxCell>
-                <mxCell id="-yE5pu1d5-fquS22NK1R-2" style="edgeStyle=none;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" parent="1" source="-yE5pu1d5-fquS22NK1R-1" target="uBNZ_dndseTE9ZpxhAe4-1" edge="1">
+                <mxCell id="-yE5pu1d5-fquS22NK1R-2" style="edgeStyle=none;html=1;" parent="1" source="-yE5pu1d5-fquS22NK1R-1" target="SXsxkE5OBYlbsdo4DAjb-1" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="-yE5pu1d5-fquS22NK1R-1" value="Queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.queue;" parent="1" vertex="1">
-                    <mxGeometry x="250" y="300" width="78" height="47" as="geometry"/>
+                    <mxGeometry x="300" y="190" width="78" height="47" as="geometry"/>
+                </mxCell>
+                <mxCell id="SXsxkE5OBYlbsdo4DAjb-2" style="edgeStyle=none;html=1;" edge="1" parent="1" source="SXsxkE5OBYlbsdo4DAjb-1" target="uBNZ_dndseTE9ZpxhAe4-1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="SXsxkE5OBYlbsdo4DAjb-1" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;EventBridge Pipes&lt;/div&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eventbridge_pipes;" vertex="1" parent="1">
+                    <mxGeometry x="298" y="290" width="80" height="80" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
     <diagram name="3.SetWatermarkImage" id="pTxutAxoqWgHe11oVwKW">
-        <mxGraphModel dx="1141" dy="583" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1004" dy="488" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="uBW2iQ4GzWjAi1kPYscO-0"/>
                 <mxCell id="uBW2iQ4GzWjAi1kPYscO-1" parent="uBW2iQ4GzWjAi1kPYscO-0"/>
@@ -271,7 +277,7 @@
         </mxGraphModel>
     </diagram>
     <diagram name="4.Watermarking" id="6XXqHkG5tha7R47p320U">
-        <mxGraphModel dx="1141" dy="583" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1004" dy="488" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="P-FESjMPkzVl-XrOsAvO-0"/>
                 <mxCell id="P-FESjMPkzVl-XrOsAvO-1" parent="P-FESjMPkzVl-XrOsAvO-0"/>
@@ -402,7 +408,7 @@
         </mxGraphModel>
     </diagram>
     <diagram name="5.Signout" id="UYcU-Ny3zDGwWWyPPZYb">
-        <mxGraphModel dx="1141" dy="583" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+        <mxGraphModel dx="1004" dy="488" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
             <root>
                 <mxCell id="p784MecrXyW4b-BCH8He-0"/>
                 <mxCell id="p784MecrXyW4b-BCH8He-1" parent="p784MecrXyW4b-BCH8He-0"/>
