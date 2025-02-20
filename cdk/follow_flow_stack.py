@@ -1,7 +1,9 @@
 from aws_cdk import Duration
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as targets
+from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_pipes as pipes
 from aws_cdk import aws_stepfunctions as sfn
 from aws_cdk import aws_stepfunctions_tasks as tasks
 from constructs import Construct
@@ -31,6 +33,30 @@ class FollowFlowStack(BaseStack):
 
         # step functionの作成
         self.flow = self.create_workflow(self.getter_lambda, self.notifier_lambda)
+        self.create_eventbridge_pipe()
+
+    def create_eventbridge_pipe(self) -> pipes.CfnPipe:
+        """EventBridge Pipes を介してSQSメッセージでステートマシンを起動されるようにする"""
+        pipes_role = iam.Role(
+            self, "FollowFlowPipesRole", assumed_by=iam.ServicePrincipal("pipes.amazonaws.com")
+        )
+        self.common_resource.followed_queue.grant_consume_messages(pipes_role)
+        self.flow.grant_start_execution(pipes_role)
+        pipe_name = f"{self.stack_name}-follow-flow-pipe"
+        pipes.CfnPipe(
+            self,
+            id=pipe_name,
+            name=pipe_name,
+            role_arn=pipes_role.role_arn,
+            source=self.common_resource.followed_queue.queue_arn,
+            target=self.flow.state_machine_arn,
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-pipes-pipe-pipetargetstatemachineparameters.html
+            target_parameters=pipes.CfnPipe.PipeTargetParametersProperty(
+                step_function_state_machine_parameters=pipes.CfnPipe.PipeTargetStateMachineParametersProperty(
+                    invocation_type="FIRE_AND_FORGET"
+                )
+            ),
+        )
 
     def create_workflow(self, getter_lambda, notifier_lambda) -> sfn.StateMachine:
         # Lambdaタスク定義
@@ -78,6 +104,7 @@ class FollowFlowStack(BaseStack):
             id=name.lower(),
             function_name=name,
             code=code,
+            timeout=Duration.seconds(60),
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "MAX_RETRIES": str(self.common_resource.max_retries),

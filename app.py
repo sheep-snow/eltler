@@ -28,15 +28,25 @@ logger.debug(f"env_vars: {json.dumps(ctx)}")
 env = Environment(account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION"))
 
 app_name = ctx["app_name"]
-common = CommonResourceStack(app, f"{app_name}-CommonResourceStack-{stage}", context_json=ctx, env=env)
+common = CommonResourceStack(
+    app, f"{app_name}-CommonResourceStack-{stage}", context_json=ctx, env=env
+)
 firehose = FirehoseStack(app, f"{app_name}-FirehoseStack-{stage}", common_resource=common, env=env)
-api = ApiStack(app, f"{app_name}-ApiStack-{stage}", common_resource=common, env=env)
-follow = FollowFlowStack(app, f"{app_name}-FollowFlowStack-{stage}", common_resource=common, env=env)
-signup = SignupFlowStack(app, f"{app_name}-SignupFlowStack-{stage}", common_resource=common, env=env)
+# api = ApiStack(app, f"{app_name}-ApiStack-{stage}", common_resource=common, env=env)
+follow = FollowFlowStack(
+    app, f"{app_name}-FollowFlowStack-{stage}", common_resource=common, env=env
+)
+signup = SignupFlowStack(
+    app, f"{app_name}-SignupFlowStack-{stage}", common_resource=common, env=env
+)
 set_watermark_img = SetWatermarkImgStack(
     app, f"{app_name}-SetWatermarkImgStack-{stage}", common_resource=common, env=env
 )
-watermarking = WatermarkingFlowStack(app, f"{app_name}-WatermarkingFlowStack-{stage}", common_resource=common, env=env)
-signout = SignoutFlowStack(app, f"{app_name}-SignoutFlowStack-{stage}", common_resource=common, env=env)
+watermarking = WatermarkingFlowStack(
+    app, f"{app_name}-WatermarkingFlowStack-{stage}", common_resource=common, env=env
+)
+signout = SignoutFlowStack(
+    app, f"{app_name}-SignoutFlowStack-{stage}", common_resource=common, env=env
+)
 
 app.synth()
