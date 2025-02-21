@@ -34,6 +34,39 @@ def get_app_password_from_convo(dm, convo_id) -> str:
 
 
 def send_dm_to_did(dm, did, message) -> models.ChatBskyConvoDefs.MessageView:
+    """_summary_
+
+    Args:
+        dm (_type_): _description_
+        did (_type_): _description_
+        message (_type_): _description_
+
+    Returns:
+        models.ChatBskyConvoDefs.MessageView: _description_
+    Usage:
+        ```
+        from lib.bs.client import get_dm_client
+        from lib.bs.convos import send_dm_to_did
+        from lib.log import get_logger
+        from settings import settings
+
+        logger = get_logger(__name__)
+
+        msg = "xxxx"
+
+
+        def handler(event, context):
+            body = event.Records[0]["body"]
+            did = body["did"]
+            client = get_dm_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
+            send_dm_to_did(client.chat.bsky.convo, did, msg)
+            return {"message": "OK", "status": 200}
+
+
+        if __name__ == "__main__":
+            print(handler({}, {}))
+        ```
+    """
     convo = dm.get_convo_for_members(
         models.ChatBskyConvoGetConvoForMembers.Params(members=[did])
     ).convo

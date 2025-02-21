@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e" pages="3">
     <diagram id="zBH2zvv99mnQwoewfwPP" name="1.follow">
-        <mxGraphModel dx="1004" dy="488" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="740" dy="373" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -23,7 +23,7 @@
                     <mxGeometry x="259.19000000000005" y="298" width="90.81" height="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="xxtSfHxv2V-E8UYSFDy--10" value="&lt;div&gt;User Files Bucket&lt;/div&gt;&lt;div&gt;&amp;lt;&amp;lt;S3&amp;gt;&amp;gt;&lt;/div&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.bucket;" parent="1" vertex="1">
-                    <mxGeometry x="394.5" y="460" width="75" height="78" as="geometry"/>
+                    <mxGeometry x="660" y="460" width="75" height="78" as="geometry"/>
                 </mxCell>
                 <mxCell id="xxtSfHxv2V-E8UYSFDy--35" value="" style="edgeStyle=none;html=1;" parent="1" source="xH-QIlLKF97px7qmvPhe-1" target="xxtSfHxv2V-E8UYSFDy--32" edge="1">
                     <mxGeometry relative="1" as="geometry">
@@ -41,31 +41,19 @@
                 <mxCell id="xxtSfHxv2V-E8UYSFDy--36" value="&lt;div&gt;Follow Flow&lt;/div&gt;&amp;lt;&amp;lt;AWS Step Functions workflow&amp;gt;&amp;gt;" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_step_functions_workflow;strokeColor=#CD2264;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#CD2264;dashed=0;" parent="1" vertex="1">
                     <mxGeometry x="350" y="670" width="420" height="160" as="geometry"/>
                 </mxCell>
-                <mxCell id="xxtSfHxv2V-E8UYSFDy--44" value="" style="edgeStyle=none;html=1;" parent="xxtSfHxv2V-E8UYSFDy--36" source="xxtSfHxv2V-E8UYSFDy--42" target="xxtSfHxv2V-E8UYSFDy--43" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="xxtSfHxv2V-E8UYSFDy--44" value="" style="edgeStyle=none;html=1;" parent="xxtSfHxv2V-E8UYSFDy--36" source="xxtSfHxv2V-E8UYSFDy--43" target="xxtSfHxv2V-E8UYSFDy--42" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="260" y="-50" as="targetPoint"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="xxtSfHxv2V-E8UYSFDy--42" value="Touch User File" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.lambda_function;" parent="xxtSfHxv2V-E8UYSFDy--36" vertex="1">
-                    <mxGeometry x="58" y="57" width="48" height="48" as="geometry"/>
-                </mxCell>
-                <mxCell id="Zwvd3rMRDm8QhT40Z4Qf-2" value="" style="edgeStyle=none;html=1;" parent="xxtSfHxv2V-E8UYSFDy--36" source="xxtSfHxv2V-E8UYSFDy--43" target="Zwvd3rMRDm8QhT40Z4Qf-1" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                    <mxGeometry x="323.5" y="57" width="48" height="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="xxtSfHxv2V-E8UYSFDy--43" value="Follow Back" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.lambda_function;" parent="xxtSfHxv2V-E8UYSFDy--36" vertex="1">
                     <mxGeometry x="186" y="57" width="48" height="48" as="geometry"/>
                 </mxCell>
-                <mxCell id="Zwvd3rMRDm8QhT40Z4Qf-1" value="Send DM" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.lambda_function;" parent="xxtSfHxv2V-E8UYSFDy--36" vertex="1">
-                    <mxGeometry x="314" y="57" width="48" height="48" as="geometry"/>
-                </mxCell>
                 <mxCell id="xxtSfHxv2V-E8UYSFDy--47" value="Create a file&lt;div&gt;named user DID&lt;/div&gt;" style="edgeStyle=none;html=1;" parent="1" source="xxtSfHxv2V-E8UYSFDy--42" target="xxtSfHxv2V-E8UYSFDy--10" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="xxtSfHxv2V-E8UYSFDy--48" value="DM&lt;div&gt;&quot;Please Reply Your App Password via DM...&quot;&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="Zwvd3rMRDm8QhT40Z4Qf-1" target="xxtSfHxv2V-E8UYSFDy--7" edge="1">
-                    <mxGeometry x="-0.6302" relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="690" y="338"/>
-                        </Array>
-                        <mxPoint as="offset"/>
-                    </mxGeometry>
                 </mxCell>
                 <mxCell id="Zwvd3rMRDm8QhT40Z4Qf-3" value="Follow Back" style="edgeStyle=orthogonalEdgeStyle;html=1;" parent="1" source="xxtSfHxv2V-E8UYSFDy--43" target="xxtSfHxv2V-E8UYSFDy--7" edge="1">
                     <mxGeometry x="-0.3086" relative="1" as="geometry">
@@ -97,7 +85,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="ZOP575mnfubcYQVSe72Z" name="2.Signup">
-        <mxGraphModel dx="1004" dy="488" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+        <mxGraphModel dx="740" dy="373" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -177,10 +165,10 @@
                 <mxCell id="-yE5pu1d5-fquS22NK1R-1" value="Queue" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.queue;" parent="1" vertex="1">
                     <mxGeometry x="300" y="190" width="78" height="47" as="geometry"/>
                 </mxCell>
-                <mxCell id="SXsxkE5OBYlbsdo4DAjb-2" style="edgeStyle=none;html=1;" edge="1" parent="1" source="SXsxkE5OBYlbsdo4DAjb-1" target="uBNZ_dndseTE9ZpxhAe4-1">
+                <mxCell id="SXsxkE5OBYlbsdo4DAjb-2" style="edgeStyle=none;html=1;" parent="1" source="SXsxkE5OBYlbsdo4DAjb-1" target="uBNZ_dndseTE9ZpxhAe4-1" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="SXsxkE5OBYlbsdo4DAjb-1" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;EventBridge Pipes&lt;/div&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eventbridge_pipes;" vertex="1" parent="1">
+                <mxCell id="SXsxkE5OBYlbsdo4DAjb-1" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;EventBridge Pipes&lt;/div&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.eventbridge_pipes;" parent="1" vertex="1">
                     <mxGeometry x="298" y="290" width="80" height="80" as="geometry"/>
                 </mxCell>
             </root>
