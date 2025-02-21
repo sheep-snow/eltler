@@ -11,7 +11,7 @@ app_pass_pattern = re.compile(
 """Bluesky アプリパスワードの正規表現"""
 
 
-def get_app_password(dm, convo_id) -> str:
+def get_app_password_from_convo(dm, convo_id) -> str:
     convo = dm.get_convo(models.ChatBskyConvoGetConvo.ParamsDict(convo_id=convo_id)).convo
     convo_sender_did = [
         member.did for member in convo.members if member.handle != settings.BOT_USERID
@@ -33,17 +33,28 @@ def get_app_password(dm, convo_id) -> str:
             )
 
 
-def send_dm(dm, convo_id) -> None:
+def send_dm_to_did(dm, did, message) -> models.ChatBskyConvoDefs.MessageView:
+    convo = dm.get_convo_for_members(
+        models.ChatBskyConvoGetConvoForMembers.Params(members=[did])
+    ).convo
+    return dm.send_message(
+        models.ChatBskyConvoSendMessage.Data(
+            convo_id=convo.id, message=models.ChatBskyConvoDefs.MessageInput(text=message)
+        )
+    )
+
+
+def send_dm(dm, convo_id=None) -> models.ChatBskyConvoDefs.MessageView:
     msg = """"🙌🏻アプリパスワードを受信しました。
     サインアップ完了後に使い方をDMでお知らせしますのでお待ち下さい!
     この会話からは退出して頂いてかまいません。"""
-    dm.send_message(
+    return dm.send_message(
         models.ChatBskyConvoSendMessage.Data(
             convo_id=convo_id, message=models.ChatBskyConvoDefs.MessageInput(text=msg)
         )
     )
 
 
-def leave_convo(dm, convo_id) -> None:
+def leave_convo(dm, convo_id) -> models.ChatBskyConvoLeaveConvo.Response:
     # 見終わったDMは二度と見ないよう会話から脱退する
-    dm.leave_convo(models.ChatBskyConvoLeaveConvo.Data(convo_id=convo_id))
+    return dm.leave_convo(models.ChatBskyConvoLeaveConvo.Data(convo_id=convo_id))

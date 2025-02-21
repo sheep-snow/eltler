@@ -20,7 +20,7 @@ class FollowFlowStack(BaseStack):
         self.cronrule = self.create_eventbridge_cron_rule()
         self.executor_lambda = self.create_executor_lambda()
         self.common_resource.followed_queue.grant_send_messages(self.executor_lambda)
-        self.getter_lambda = self.create_getter_lambda()
+        self.getter_lambda = self.create_touch_user_file_lambda()
         self.notifier_lambda = self.create_notifier_lambda()
         self.sm_resource = self._get_secrets_manager_resource(common_resource.secret.secret_name)
 
@@ -114,10 +114,10 @@ class FollowFlowStack(BaseStack):
         self._add_common_tags(func)
         return func
 
-    def create_getter_lambda(self) -> _lambda.DockerImageFunction:
-        name: str = f"{self.stack_name}-signup-getter"
+    def create_touch_user_file_lambda(self) -> _lambda.DockerImageFunction:
+        name: str = f"{self.stack_name}-signup-touch_user_file"
         code = _lambda.DockerImageCode.from_image_asset(
-            directory=".", cmd=["signup.getter.handler"]
+            directory=".", cmd=["signup.touch_user_file.handler"]
         )
         func = _lambda.DockerImageFunction(
             scope=self,
@@ -126,8 +126,7 @@ class FollowFlowStack(BaseStack):
             code=code,
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
-                "MAX_RETRIES": str(self.common_resource.max_retries),
-                "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
+                "USERINFO_BUCKET_NAME": self.common_resource.userinfo_bucket.bucket_name,
             },
         )
         self._add_common_tags(func)
