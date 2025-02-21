@@ -22,14 +22,13 @@ class FollowFlowStack(BaseStack):
         self.common_resource.followed_queue.grant_send_messages(self.executor_lambda)
         self.touch_user_file_lambda = self.create_touch_user_file_lambda()
         self.followback_lambda = self.create_followback_lambda()
-        self.sm_resource = self._get_secrets_manager_resource(common_resource.secret.secret_name)
 
         # Lambda関数をEventBridgeのターゲットに追加
         self.cronrule.add_target(targets.LambdaFunction(self.executor_lambda))
         # Secrets Managerの利用権限付与
-        self.common_resource.secret.grant_read(self.executor_lambda)
-        self.common_resource.secret.grant_read(self.touch_user_file_lambda)
-        self.common_resource.secret.grant_read(self.followback_lambda)
+        common_resource.secret_manager.grant_read(self.executor_lambda)
+        common_resource.secret_manager.grant_read(self.touch_user_file_lambda)
+        common_resource.secret_manager.grant_read(self.followback_lambda)
 
         # step functionの作成
         self.flow = self.create_workflow(self.touch_user_file_lambda, self.followback_lambda)
@@ -98,8 +97,8 @@ class FollowFlowStack(BaseStack):
             timeout=Duration.seconds(60),
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
-                "MAX_RETRIES": str(self.common_resource.max_retries),
                 "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
+                "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
         )
         self._add_common_tags(func)
@@ -118,6 +117,7 @@ class FollowFlowStack(BaseStack):
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "USERINFO_BUCKET_NAME": self.common_resource.userinfo_bucket.bucket_name,
+                "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
         )
         self._add_common_tags(func)
@@ -133,7 +133,10 @@ class FollowFlowStack(BaseStack):
             id=name.lower(),
             function_name=name,
             code=code,
-            environment={"LOG_LEVEL": self.common_resource.loglevel},
+            environment={
+                "LOG_LEVEL": self.common_resource.loglevel,
+                "SECRET_NAME": self.common_resource.secret_manager.secret_name,
+            },
         )
         self._add_common_tags(func)
         return func

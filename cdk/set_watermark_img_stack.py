@@ -19,14 +19,13 @@ class SetWatermarkImgStack(BaseStack):
         self.executor_lambda = self.create_executor_lambda()
         self.getter_lambda = self.create_getter_lambda()
         self.notifier_lambda = self.create_notifier_lambda()
-        self.sm_resource = self._get_secrets_manager_resource(common_resource.secret.secret_name)
 
         # Lambda関数をEventBridgeのターゲットに追加
         self.cronrule.add_target(targets.LambdaFunction(self.executor_lambda))
         # Secrets Managerの利用権限付与
-        self.common_resource.secret.grant_read(self.executor_lambda)
-        self.common_resource.secret.grant_read(self.getter_lambda)
-        self.common_resource.secret.grant_read(self.notifier_lambda)
+        self.common_resource.secret_manager.grant_read(self.executor_lambda)
+        self.common_resource.secret_manager.grant_read(self.getter_lambda)
+        self.common_resource.secret_manager.grant_read(self.notifier_lambda)
 
         # step functionの作成
         self.flow = self.create_workflow(self.getter_lambda, self.notifier_lambda)
@@ -79,7 +78,7 @@ class SetWatermarkImgStack(BaseStack):
             code=code,
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
-                "MAX_RETRIES": str(self.common_resource.max_retries),
+                "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
         )
         self._add_common_tags(func)
@@ -97,7 +96,7 @@ class SetWatermarkImgStack(BaseStack):
             code=code,
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
-                "MAX_RETRIES": str(self.common_resource.max_retries),
+                "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
         )
         self._add_common_tags(func)
@@ -115,7 +114,7 @@ class SetWatermarkImgStack(BaseStack):
             code=code,
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
-                "MAX_RETRIES": str(self.common_resource.max_retries),
+                "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
         )
         self._add_common_tags(func)

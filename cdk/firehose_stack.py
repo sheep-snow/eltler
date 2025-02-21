@@ -62,8 +62,9 @@ class FirehoseStack(BaseStack):
                 "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
                 "SET_WATERMARK_IMG_QUEUE_URL": self.common_resource.followed_queue.queue_url,
                 "WATERMARKING_QUEUE_URL": self.common_resource.followed_queue.queue_url,
+                "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
-            secrets=self.common_resource.secret_manager,
+            # secrets={**self.common_resource.secret_manager.secret_value}, # TODO SecretsManagerの値を与える
         )
 
         # Create Fargate Service

@@ -26,7 +26,6 @@ class CommonResourceStack(Stack):
     app_name: str
     loglevel: str
     max_retries: int
-    secret_name: str
 
     secret_manager: secretsmanager.ISecret
     original_image_bucket: s3.IBucket
@@ -36,8 +35,8 @@ class CommonResourceStack(Stack):
     set_watermark_img_queue: sqs.IQueue
     watermarking_queue: sqs.IQueue
 
-    ecs_execution_role: iam.IRole
-    ecs_task_role: iam.IRole
+    create_ecs_execution_role: iam.IRole
+    create_ecs_task_role: iam.IRole
 
     def __init__(self, scope: Construct, construct_id: str, context_json: dict, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -52,7 +51,6 @@ class CommonResourceStack(Stack):
         self.max_capacity = int(env_vars.get("max_capacity"))
         self.app_name = env_vars.get("app_name")
         self.max_retries = int(env_vars.get("max_retries"))
-        self.secret_name = f"{self.app_name}-secretsmanager-{self.stage}".lower()
         self.image_expiration_days = int(env_vars.get("image_expiration_days"))
         self.userinfo_expiration_days = int(env_vars.get("userinfo_expiration_days"))
         # リソースの作成
@@ -75,24 +73,24 @@ class CommonResourceStack(Stack):
         except Exception:
             return None
 
-    def check_secret_exists(self, secret_name: str) -> bool:
+    def check_secret_exists(self, secret_id: str) -> bool:
         """Secrets Manager にシークレットが存在するかチェック"""
         client = boto3.client("secretsmanager")
         try:
-            client.describe_secret(SecretId=secret_name)
+            client.describe_secret(SecretId=secret_id)
             return True
         except client.exceptions.ResourceNotFoundException:
             return False
 
     def create_secret_manager(self):
         """既存のシークレットがあれば取得し、なければ作成する"""
-        secret_id = self.secret_name
+        secret_id = f"{self.app_name}-secretsmanager-{self.stage}".lower()
         if self.check_secret_exists(secret_id):
             # 既存のシークレットを取得
-            self.secret = secretsmanager.Secret.from_secret_name_v2(
+            CfnOutput(self, "SecretExists", value=f"Using existing secret: {secret_id}")
+            return secretsmanager.Secret.from_secret_name_v2(
                 self, id=secret_id, secret_name=secret_id
             )
-            CfnOutput(self, "SecretExists", value=f"Using existing secret: {secret_id}")
         else:
             # 既存のシークレットがない場合のみ新規作成
             default_secret = json.dumps(
@@ -102,7 +100,8 @@ class CommonResourceStack(Stack):
                     "bot_app_password": "somepassword",
                 }
             )
-            self.secret = secretsmanager.Secret(
+            CfnOutput(self, "SecretCreated", value=f"Created new secret: {secret_id}")
+            return secretsmanager.Secret(
                 self,
                 secret_id,
                 secret_name=secret_id,
@@ -112,14 +111,13 @@ class CommonResourceStack(Stack):
                     secret_string_template=default_secret, generate_string_key="password"
                 ),
             )
-            CfnOutput(self, "SecretCreated", value=f"Created new secret: {secret_id}")
 
     def create_original_image_bucket(self):
         """オリジナル画像用バケットの作成"""
         original_bucket_id = (
             f"{self.app_name}-original-imgs-{self.stage}-{self.aws_account}".lower()
         )
-        self.org_image_bucket = s3.Bucket(
+        return s3.Bucket(
             scope=self,
             id=original_bucket_id,
             bucket_name=original_bucket_id,
@@ -137,7 +135,7 @@ class CommonResourceStack(Stack):
         transformed_bucket_id = (
             f"{self.app_name}-watermarked-imgs-{self.stage}-{self.aws_account}".lower()
         )
-        self.org_image_bucket = s3.Bucket(
+        return s3.Bucket(
             scope=self,
             id=transformed_bucket_id,
             bucket_name=transformed_bucket_id,
@@ -155,7 +153,7 @@ class CommonResourceStack(Stack):
         userinfo_bucket_id = (
             f"{self.app_name}-userinfo-files-{self.stage}-{self.aws_account}".lower()
         )
-        self.org_image_bucket = s3.Bucket(
+        return s3.Bucket(
             scope=self,
             id=userinfo_bucket_id,
             bucket_name=userinfo_bucket_id,
