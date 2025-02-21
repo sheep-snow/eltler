@@ -2,6 +2,10 @@ from aws_cdk import Duration
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as targets
 from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_lambda_event_sources as lambda_events
+from aws_cdk import aws_s3 as s3
+from aws_cdk import aws_s3_notifications as s3n
+from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_stepfunctions as sfn
 from aws_cdk import aws_stepfunctions_tasks as tasks
 from constructs import Construct
@@ -15,13 +19,17 @@ class SignupFlowStack(BaseStack):
         self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs
     ) -> None:
         super().__init__(scope, construct_id, common_resource=common_resource, **kwargs)
-        self.cronrule = self.create_eventbridge_cron_rule()
+
+        # # S3バケットにファイルがPOSTされた際に、対象ユーザーにAppPasswordのDM経由の提供を促すDMを送る
+        # self.userfile_posted_queue = self.create_userfile_object_posted_queue()
+        # self.add_event_notification_to_bucket(
+        #     self.common_resource.userfile_bucket, self.userfile_posted_queue
+        # )
+
         self.executor_lambda = self.create_executor_lambda()
         self.getter_lambda = self.create_getter_lambda()
         self.notifier_lambda = self.create_notifier_lambda()
 
-        # Lambda関数をEventBridgeのターゲットに追加
-        self.cronrule.add_target(targets.LambdaFunction(self.executor_lambda))
         # Secrets Managerの利用権限付与
         self.common_resource.secret_manager.grant_read(self.executor_lambda)
         self.common_resource.secret_manager.grant_read(self.getter_lambda)
@@ -31,30 +39,45 @@ class SignupFlowStack(BaseStack):
         self.flow = self.create_workflow(self.getter_lambda, self.notifier_lambda)
 
         # executor lambdaをEventBridgeのターゲットに追加
+        self.cronrule = self.create_eventbridge_cron_rule()
         self.cronrule.add_target(targets.LambdaFunction(self.executor_lambda))
+
+    def create_eventbridge_cron_rule(self) -> events.Rule:
+        rule = events.Rule(
+            self,
+            "SignupExecutionRule",
+            schedule=events.Schedule.cron(minute="*/2", hour="*"),
+            enabled=True,
+        )
+        self._add_common_tags(rule)
+        return rule
+
+    def create_userfile_posted_queue(self) -> sqs.Queue:
+        name = f"{self.common_resource.app_name}-userfile-posted-{self.common_resource.stage}"
+        queue = sqs.Queue(
+            self,
+            id=name,
+            queue_name=name,
+            visibility_timeout=Duration.seconds(2),
+            retention_period=Duration.days(14),
+        )
+        self._add_common_tags(queue)
+        return queue
+
+    # def add_event_notification_to_bucket(bucket: s3.IBucket, sqs: sqs.IQueue):
+    #     # S3 POST イベント時の通知をSQSに追加
+    #     bucket.add_event_notification(s3.EventType.OBJECT_CREATED_POST, s3n.SqsDestination(sqs))
 
     def create_workflow(self, getter_lambda, notifier_lambda) -> sfn.StateMachine:
         # Lambdaタスク定義
         getter_task = tasks.LambdaInvoke(
-            self, "getter", lambda_function=self.getter_lambda, output_path="$.Payload"
+            self, "getter", lambda_function=getter_lambda, output_path="$.Payload"
         )
         notifier_task = tasks.LambdaInvoke(
-            self, "notifier", lambda_function=self.notifier_lambda, output_path="$.Payload"
+            self, "notifier", lambda_function=notifier_lambda, output_path="$.Payload"
         )
-
-        # Mapステート定義
-        map_state = sfn.DistributedMap(
-            self,
-            "MapState",
-            items_path=sfn.JsonPath.string_at("$.items"),  # JSON配列を受け取る
-        )
-        map_state.item_processor(getter_task.next(notifier_task))
-
-        # Waitステート
-        wait_state = sfn.Wait(self, "WaitState", time=sfn.WaitTime.seconds_path("$.waitSeconds"))
-
         # ステートマシンの定義
-        definition = wait_state.next(map_state)
+        definition = getter_task.next(notifier_task)
         return sfn.StateMachine(
             self,
             "SignupFlow",
@@ -62,17 +85,7 @@ class SignupFlowStack(BaseStack):
             timeout=Duration.minutes(5),
         )
 
-    def create_eventbridge_cron_rule(self) -> events.Rule:
-        event_name = (
-            f"{self.common_resource.app_name}-signup-executor-rule-{self.common_resource.stage}"
-        )
-        rule = events.Rule(
-            self, event_name, schedule=events.Schedule.cron(minute="*/5", hour="*"), enabled=False
-        )
-        self._add_common_tags(rule)
-        return rule
-
-    def create_executor_lambda(self) -> _lambda.DockerImageFunction:
+    def create_executor_lambda(self, sqs: sqs.IQueue) -> _lambda.DockerImageFunction:
         name: str = f"{self.common_resource.app_name}-signup-executor-{self.common_resource.stage}"
         code = _lambda.DockerImageCode.from_image_asset(
             directory=".", cmd=["signup.executor.handler"]
@@ -82,15 +95,20 @@ class SignupFlowStack(BaseStack):
             id=name.lower(),
             function_name=name,
             code=code,
+            events=[lambda_events.SqsEventSource(queue=sqs)],
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
+            timeout=Duration.seconds(60),
+            memory_size=128,
+            retry_attempts=1,
         )
         self._add_common_tags(func)
         return func
 
     def create_getter_lambda(self) -> _lambda.DockerImageFunction:
+        """conv_id を元にConversation内のメッセージからApp Passwordを取得する"""
         name: str = f"{self.common_resource.app_name}-signup-getter-{self.common_resource.stage}"
         code = _lambda.DockerImageCode.from_image_asset(
             directory=".", cmd=["signup.getter.handler"]

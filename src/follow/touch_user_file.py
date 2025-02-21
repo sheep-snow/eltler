@@ -10,9 +10,15 @@ bucket_name = settings.USERINFO_BUCKET_NAME
 
 
 def handler(event, context):
-    logger.info(event)
+    """S3バケットに空のユーザファイルを新規作成する"""
+    logger.info(f"Received event: {event}")
+
+    # SQS からのメッセージを処理する
+    # for record in event["Records"]:
+    #     pass
     body = event.Records[0]["body"]
     did = body["did"]
+
     if not did.startswith("did:plc:"):
         raise ValueError(f"Invalid did: {did}")
     post_object(bucket_name, f"{did}", json.dumps({}))

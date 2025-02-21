@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 def handler(event, context):
     """通知からフォローを取得しフォロワーのdidをSQSに投げる"""
-    logger.info(event)
+    logger.info(f"Received event: {event}")
     client = Client()
     client.login(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
 

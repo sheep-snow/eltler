@@ -8,7 +8,9 @@ logger = get_logger(__name__)
 
 
 def handler(event, context):
-    logger.info(event)
+    """フォローバックする"""
+
+    logger.info(f"Received event: {event}")
 
     client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
     follows = client.get_follows(settings.BOT_USERID)

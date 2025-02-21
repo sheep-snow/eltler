@@ -22,6 +22,7 @@ class FollowFlowStack(BaseStack):
         self.common_resource.followed_queue.grant_send_messages(self.executor_lambda)
         self.touch_user_file_lambda = self.create_touch_user_file_lambda()
         self.followback_lambda = self.create_followback_lambda()
+        self.send_dm_lambda = self.create_send_dm_lambda()
 
         # Lambda関数をEventBridgeのターゲットに追加
         self.cronrule.add_target(targets.LambdaFunction(self.executor_lambda))
@@ -31,7 +32,9 @@ class FollowFlowStack(BaseStack):
         common_resource.secret_manager.grant_read(self.followback_lambda)
 
         # step functionの作成
-        self.flow = self.create_workflow(self.touch_user_file_lambda, self.followback_lambda)
+        self.flow = self.create_workflow(
+            self.touch_user_file_lambda, self.followback_lambda, self.send_dm_lambda
+        )
         self.create_eventbridge_pipe()
 
     def create_eventbridge_pipe(self) -> pipes.CfnPipe:
@@ -57,19 +60,18 @@ class FollowFlowStack(BaseStack):
             ),
         )
 
-    def create_workflow(self, getter_lambda, notifier_lambda) -> sfn.StateMachine:
+    def create_workflow(
+        self, touch_user_file_lambda, followback_lambda, send_dm_lambda
+    ) -> sfn.StateMachine:
         # Lambdaタスク定義
-        getter_task = tasks.LambdaInvoke(
-            self,
-            "TouchUserFile",
-            lambda_function=self.touch_user_file_lambda,
-            output_path="$.Payload",
+        touch_user_file_task = tasks.LambdaInvoke(
+            self, "TouchUserFile", lambda_function=touch_user_file_lambda, output_path="$.Payload"
         )
         followback_task = tasks.LambdaInvoke(
-            self, "Followback", lambda_function=self.followback_lambda, output_path="$.Payload"
+            self, "Followback", lambda_function=followback_lambda, output_path="$.Payload"
         )
         # ステートマシンの定義
-        definition = getter_task.next(followback_task)
+        definition = touch_user_file_task.next(followback_task).next(send_dm_lambda)
         return sfn.StateMachine(
             self,
             "FollowFlow",
@@ -94,18 +96,19 @@ class FollowFlowStack(BaseStack):
             id=name.lower(),
             function_name=name,
             code=code,
-            timeout=Duration.seconds(60),
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
+            memory_size=256,
+            timeout=Duration.seconds(60),
         )
         self._add_common_tags(func)
         return func
 
     def create_touch_user_file_lambda(self) -> _lambda.DockerImageFunction:
-        name: str = f"{self.stack_name}-signup-touch_user_file"
+        name: str = f"{self.stack_name}-follow-touch_user_file"
         code = _lambda.DockerImageCode.from_image_asset(
             directory=".", cmd=["follow.touch_user_file.handler"]
         )
@@ -119,12 +122,14 @@ class FollowFlowStack(BaseStack):
                 "USERINFO_BUCKET_NAME": self.common_resource.userinfo_bucket.bucket_name,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
+            memory_size=256,
+            timeout=Duration.seconds(60),
         )
         self._add_common_tags(func)
         return func
 
     def create_followback_lambda(self) -> _lambda.DockerImageFunction:
-        name: str = f"{self.stack_name}-signup-followback"
+        name: str = f"{self.stack_name}-follow-followback"
         code = _lambda.DockerImageCode.from_image_asset(
             directory=".", cmd=["follow.followback.handler"]
         )
@@ -137,6 +142,28 @@ class FollowFlowStack(BaseStack):
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
+            memory_size=128,
+            timeout=Duration.seconds(30),
+        )
+        self._add_common_tags(func)
+        return func
+
+    def create_send_dm_lambda(self) -> _lambda.DockerImageFunction:
+        name: str = f"{self.stack_name}-follow-send_dm"
+        code = _lambda.DockerImageCode.from_image_asset(
+            directory=".", cmd=["follow.send_dm.handler"]
+        )
+        func = _lambda.DockerImageFunction(
+            scope=self,
+            id=name.lower(),
+            function_name=name,
+            code=code,
+            environment={
+                "LOG_LEVEL": self.common_resource.loglevel,
+                "SECRET_NAME": self.common_resource.secret_manager.secret_name,
+            },
+            memory_size=128,
+            timeout=Duration.seconds(30),
         )
         self._add_common_tags(func)
         return func

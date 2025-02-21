@@ -1,29 +1,50 @@
 import os
-from sre_parse import State
+from time import sleep
+from typing import Optional
 from uuid import uuid4
 
+import atproto
 import boto3
+from atproto import models
 
-from lib.bs.client import get_dm_client
+from lib.bs.client import get_client, get_dm_client
+from lib.bs.convos import leave_convo
 from lib.log import get_logger
 from settings import settings
 
 logger = get_logger(__name__)
 
 
+LOOP_LIMITATION = 5
+"""単一実行内で処理する最大会話数"""
+
+
+def get_followers_did(client: atproto.Client, did: str) -> set[Optional[str]]:
+    resp: models.AppBskyGraphGetFollowers.Response = client.get_followers(client.me.did)
+    return {i.did for i in resp.followers}
+
+
 def handler(event, context):
-    """Lambda handler."""
+    """新規に開始された会話を処理するStatemachineを実行する"""
+    logger.info(f"Received event: {event}")
+
     # Get the list of conversations
-    client = get_dm_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
-    convo_list = client.chat.bsky.convo.list_convos()  # use limit and cursor to paginate
+    convo_client = get_dm_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
+    convo_list = convo_client.chat.bsky.convo.list_convos()  # use limit and cursor to paginate
     logger.info(f"Found ({len(convo_list.convos)}) new conversations.")
+    client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
+    followers = get_followers_did(client, client.me.did)
 
     # Start the state machine
     sfn_client = boto3.client("stepfunctions")
-    for c in convo_list.convos:
+    for c in convo_list.convos[:LOOP_LIMITATION]:
+        if c.members[0].did not in followers:
+            leave_convo(convo_client, c.id)
+            logger.info(f"Skip and leave the conversation because the user is not follower {c.id}.")
+            continue
         try:
             execution_id = f"{c.id}-{uuid4()}"
-            resp = sfn_client.start_execution(
+            sfn_client.start_execution(
                 **{
                     "input": {"convo_id": c.id},
                     "stateMachineArn": os.environ["stateMachineArn"],
