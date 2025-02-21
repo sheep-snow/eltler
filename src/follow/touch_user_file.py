@@ -10,6 +10,7 @@ bucket_name = settings.USERINFO_BUCKET_NAME
 
 
 def handler(event, context):
+    logger.info(event)
     body = event.Records[0]["body"]
     did = body["did"]
     if not did.startswith("did:plc:"):

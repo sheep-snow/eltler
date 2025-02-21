@@ -8,7 +8,8 @@ logger = get_logger(__name__)
 
 
 def handler(event, context):
-    """Lambda handler."""
+    logger.info(event)
+
     client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
     follows = client.get_follows(settings.BOT_USERID)
     body = event.Records[0]["body"]
