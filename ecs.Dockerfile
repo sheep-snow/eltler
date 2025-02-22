@@ -2,8 +2,9 @@ FROM python:3.11
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONUTF8=1
+WORKDIR /project
+ENV PYTHONPATH=/project:${PYTHONPATH}
 
-WORKDIR /app
 RUN apt-get update
 RUN apt-get install unzip curl -y \
     && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
@@ -19,5 +20,6 @@ RUN pip install --upgrade pip \
     && poetry config virtualenvs.create false \
     && poetry install --no-root --only main
 
-COPY src/ /app/
-CMD [ "firehose.listener.main" ]
+COPY src/ /project/
+ENTRYPOINT [ "poetry", "run" ]
+CMD [ "python", "firehose/listener.py" ]

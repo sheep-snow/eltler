@@ -1,6 +1,8 @@
+from aws_cdk import RemovalPolicy
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecs as ecs
-from aws_cdk.aws_ecr_assets import DockerImageAsset, DockerImageAssetInvalidationOptions
+from aws_cdk import aws_logs as logs
+from aws_cdk.aws_ecr_assets import DockerImageAsset
 from constructs import Construct
 
 # from aws_cdk.aws_ecs_patterns import FargateServiceBaseProps
@@ -51,12 +53,30 @@ class FirehoseStack(BaseStack):
         )
         # ECS Task Definition
         task_name = f"{self.common_resource.app_name}-{self.common_resource.stage}-task"
-        task_definition = ecs.FargateTaskDefinition(self, task_name)
+        task_definition = ecs.FargateTaskDefinition(
+            self,
+            task_name,
+            cpu=256,
+            memory_limit_mib=512,
+            runtime_platform=ecs.RuntimePlatform(
+                cpu_architecture=ecs.CpuArchitecture.X86_64,
+                operating_system_family=ecs.OperatingSystemFamily.LINUX,
+            ),
+        )
+        self.common_resource.secret_manager.grant_read(task_definition.task_role)
+
+        log_group = logs.LogGroup(
+            self,
+            f"{self.common_resource.app_name}-{self.common_resource.stage}-ecs-log-group",
+            log_group_name=f"/ecs/{self.common_resource.app_name}/{self.common_resource.stage}",
+            removal_policy=RemovalPolicy.DESTROY,
+            retention=logs.RetentionDays.THREE_DAYS,
+        )
+        log_driver = ecs.AwsLogDriver(log_group=log_group, stream_prefix="firehose")
         task_definition.add_container(
             "firehose",
-            image=ecs.ContainerImage.from_ecr_repository(
-                repository=self.image_asset.repository, tag=self.image_asset.image_tag
-            ),
+            image=ecs.ContainerImage.from_docker_image_asset(asset=self.image_asset),
+            logging=log_driver,
             environment={
                 "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
                 "SET_WATERMARK_IMG_QUEUE_URL": self.common_resource.followed_queue.queue_url,
@@ -64,6 +84,9 @@ class FirehoseStack(BaseStack):
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
         )
+        self.common_resource.followed_queue.grant_send_messages(task_definition.task_role)
+        self.common_resource.followed_queue.grant_send_messages(task_definition.task_role)
+        self.common_resource.followed_queue.grant_send_messages(task_definition.task_role)
 
         # Create Fargate Service
         service_name = f"{self.common_resource.app_name}-{self.common_resource.stage}-service"
@@ -79,8 +102,6 @@ class FirehoseStack(BaseStack):
             security_groups=[sg],
             desired_count=1,
             assign_public_ip=True,
-            # execution_role=self.common_resource.ecs_execution_role,
-            # task_role=self.common_resource.ecs_task_role,
             enable_ecs_managed_tags=True,
             enable_execute_command=True,
         )
@@ -88,10 +109,4 @@ class FirehoseStack(BaseStack):
     def build_and_push_image(self) -> DockerImageAsset:
         # Build the image
         img_name = "firehose"
-        return DockerImageAsset(
-            self,
-            img_name,
-            directory=".",
-            file="ecs.Dockerfile",
-            invalidation=DockerImageAssetInvalidationOptions(build_args=False),
-        )
+        return DockerImageAsset(self, img_name, directory=".", file="ecs.Dockerfile")

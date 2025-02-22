@@ -30,7 +30,6 @@ app_name = ctx["app_name"]
 common = CommonResourceStack(
     app, f"{app_name}-CommonResourceStack-{stage}", context_json=ctx, env=env
 )
-firehose = FirehoseStack(app, f"{app_name}-FirehoseStack-{stage}", common_resource=common, env=env)
 follow = FollowFlowStack(
     app, f"{app_name}-FollowFlowStack-{stage}", common_resource=common, env=env
 )
@@ -40,6 +39,7 @@ signup = SignupFlowStack(
 set_watermark_img = SetWatermarkImgStack(
     app, f"{app_name}-SetWatermarkImgStack-{stage}", common_resource=common, env=env
 )
+firehose = FirehoseStack(app, f"{app_name}-FirehoseStack-{stage}", common_resource=common, env=env)
 watermarking = WatermarkingFlowStack(
     app, f"{app_name}-WatermarkingFlowStack-{stage}", common_resource=common, env=env
 )

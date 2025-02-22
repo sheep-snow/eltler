@@ -20,5 +20,5 @@ def handler(event, context):
     return {"message": "OK", "status": 200}
 
 
-if __name__ == "__main__":
-    print(handler({}, {}))
+# if __name__ == "__main__":
+#     print(handler({}, {}))

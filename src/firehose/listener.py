@@ -262,7 +262,7 @@ def signal_handler(_: int, __: FrameType) -> None:
     )
 
     # Stop receiving new messages
-    sqs_client.stop()
+    client.stop()
 
     # Drain the messages queue
     while not queue.empty():
@@ -281,10 +281,10 @@ def signal_handler(_: int, __: FrameType) -> None:
 def _get_current_followers() -> set:
     cursor = None
     followers = []
-    client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
+    bs_normal_client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
 
     while True:
-        fetched = client.get_followers(settings.BOT_USERID, cursor)
+        fetched = bs_normal_client.get_followers(settings.BOT_USERID, cursor)
         followers = followers + fetched.followers
         if not fetched.cursor:
             break
@@ -306,7 +306,7 @@ def main():
         cursor = multiprocessing.Value("i", start_cursor)
         params = get_firehose_params(cursor)
 
-    sqs_client = FirehoseSubscribeReposClient(params)
+    client = FirehoseSubscribeReposClient(params)
 
     workers_count = multiprocessing.cpu_count() * 2 - 1
     # workers_count = 1 # DEBUG
@@ -320,11 +320,11 @@ def main():
         if cursor.value:
             # we are using updating the cursor state here because of multiprocessing
             # typically you can call client.update_params() directly on commit processing
-            sqs_client.update_params(get_firehose_params(cursor))
+            client.update_params(get_firehose_params(cursor))
 
         queue.put(message)
 
-    sqs_client.start(on_message_handler, on_callback_error_handler)
+    client.start(on_message_handler)
 
 
 if __name__ == "__main__":
