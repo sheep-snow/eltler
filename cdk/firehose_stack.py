@@ -1,4 +1,3 @@
-from aws_cdk import CfnOutput
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecs as ecs
 from aws_cdk.aws_ecr_assets import DockerImageAsset, DockerImageAssetInvalidationOptions
@@ -64,7 +63,6 @@ class FirehoseStack(BaseStack):
                 "WATERMARKING_QUEUE_URL": self.common_resource.followed_queue.queue_url,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
-            # secrets={**self.common_resource.secret_manager.secret_value}, # TODO SecretsManagerの値を与える
         )
 
         # Create Fargate Service

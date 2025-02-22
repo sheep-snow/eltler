@@ -17,13 +17,17 @@
         "**/.hg/store/**": true,
         "**/.venv/**": true
     },
-    "ruff.nativeServer": "off",
     "github.copilot.enable": {
         "*": true,
         "properties": false
     },
+    "ruff.nativeServer": "off",
     "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff"
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit"
+        },
     },
     "workbench.colorTheme": "Monokai"
 }

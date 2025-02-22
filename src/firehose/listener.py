@@ -25,18 +25,18 @@ from atproto import (
 
 from lib.aws.sqs import get_sqs_client
 from lib.bs.client import get_client
-from lib.log import logger
+from lib.log import get_logger
 from settings import settings
 
 _INTERESTED_RECORDS = {
     # models.ids.AppBskyGraphFollow: models.AppBskyGraphFollow,  # Follows
     models.ids.AppBskyFeedPost: models.AppBskyFeedPost  # Posts
 }
+"""Listen対象とするレコードの種類"""
 
-sqs_client: boto3.client = None
-
-TAG_OF_SET_WATERMARK_IMG = "wmset"
-
+ALT_OF_SET_WATERMARK_IMG = "wmset"
+ALT_OF_SKIP_WATERMARKING = "nown"
+MAX_QUEUE_SIZE = 10000
 FOLLOWED_QUEUE_URL = os.getenv("FOLLOWED_QUEUE_URL")
 SET_WATERMARK_IMG_QUEUE_URL = os.getenv("SET_WATERMARK_IMG_QUEUE_URL")
 WATERMARKING_QUEUE_URL = os.getenv("WATERMARKING_QUEUE_URL")
@@ -47,11 +47,18 @@ FOLLOWED_LIST_UPDATE_INTERVAL_SECS = 300
 MEASURE_EVENT_INTERVAL_SECS = 10
 """イベントの計測間隔"""
 
-current_followers = set()
+logger = get_logger(__name__)
+
+sqs_client: boto3.client = None
+
+current_followers: set = set()
 """listener稼働中を通じて更新され続けるフォロワー"""
 
-pool = None
-"""multiprocessing.Pool object"""
+pool: multiprocessing.Pool = None
+"""マルチプロセス用のプール"""
+
+# queue: multiprocessing.Queue = None
+# """マルチプロセス用のキュー"""
 
 
 def on_callback_error_handler(error: BaseException) -> None:
@@ -106,32 +113,33 @@ def _get_ops_by_type(commit: models.ComAtprotoSyncSubscribeRepos.Commit) -> defa
 
 
 def _is_post_has_image(record) -> bool:
-    """Check if the post has an image"""
-    is_followers_post = True  # TODO implement it
-
-    if (
-        is_followers_post
-        and "embed" in record.model_fields_set
-        and "images" in record.embed.model_fields_set
-        and "mime_type" in record.embed.image.model_fields_set
-        and record.embed.image.mime_type.startswith("image/")
-    ):
-        return True
-    else:
-        return False
+    """画像を含む投稿であることを判定する"""
+    try:
+        if record.embed.images[0].image.mime_type.startswith("image/"):
+            return True
+    except Exception:
+        pass
+    return False
 
 
-def _is_watermarking_post(record) -> bool:
-    """Check if the record has an image"""
-    if _is_post_has_image(record) and "tags" in record.model_fields_set:
+def _is_followers_post(post) -> bool:
+    """followerによる投稿であることを判定する"""
+    return post["author"] in current_followers
+
+
+def _is_watermarking_skip(record) -> bool:
+    """ウォーターマーク付与を拒否するAltが付与されている事を判定する"""
+    images_alt = {i.alt for i in record.embed.images if "alt" in i.model_fields_set}
+    if ALT_OF_SKIP_WATERMARKING in images_alt:
         return True
     else:
         return False
 
 
 def _is_set_watermark_img_post(record) -> bool:
-    """Check if the record has new watermark image"""
-    if _is_watermarking_post(record) and TAG_OF_SET_WATERMARK_IMG in record.tags:
+    """ウォーターマーク画像の投稿であることを判定する"""
+    images_alt = {i.alt for i in record.embed.images if "alt" in i.model_fields_set}
+    if ALT_OF_SET_WATERMARK_IMG in images_alt:
         return True
     else:
         return False
@@ -165,39 +173,32 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
             continue
 
         ops = _get_ops_by_type(commit)
-
         for created_post in ops[models.ids.AppBskyFeedPost]["created"]:
-            # TODO implement it
             # https://atproto.blue/en/latest/atproto/atproto_client.models.app.bsky.feed.post.html
-            record = created_post["record"]
-            if _is_watermarking_post(record) is False:
-                continue
-            sqs_client.send_message(
-                QueueUrl="https://sqs.ap-south-1.amazonaws.com/123456789012/MyQueue",
-                MessageBody=json.dumps(
-                    {
-                        "cid": created_post["cid"],
-                        "uri": created_post["uri"],
-                        "author_did": created_post["author"],
-                        "created_at": record.created_at,
-                        "image_url": record.embed.image.url,
-                    }
-                ),
-            )
 
-        # for follow in ops[models.ids.AppBskyGraphFollow]["created"]:
-        #     # TODO implement it
-        #     # https://pub.dev/documentation/lexicon/latest/docs/appBskyGraphFollow-constant.html
-        #     payload = json.dumps(
-        #         {
-        #             "cid": follow["cid"],
-        #             "uri": follow["uri"],
-        #             "follower_did": follow["author"],
-        #             "followed_did": follow["record"].subject,
-        #             "created_at": follow["record"].created_at,
-        #         }
-        #     )
-        #     logger.info(f"NEW FOLLOW: {payload}")
+            record = created_post["record"]
+            if not (_is_followers_post(created_post) and _is_post_has_image(record)):
+                # フォロワーの画像投稿ではない場合はスキップ
+                continue
+            basic_msg_body = {
+                "cid": created_post["cid"],
+                "uri": created_post["uri"],
+                "author_did": created_post["author"],
+                "created_at": record.created_at,
+            }
+            # ウォーターマーク拒否ではないコンテンツ画像の投稿を検知
+            if _is_watermarking_skip(record) is False:
+                sqs_client.send_message(
+                    QueueUrl=WATERMARKING_QUEUE_URL, MessageBody=json.dumps(basic_msg_body)
+                )
+                continue
+            # ウォーターマーク画像の投稿を検知
+            if _is_set_watermark_img_post(record):
+                sqs_client.send_message(
+                    QueueUrl=SET_WATERMARK_IMG_QUEUE_URL,
+                    MessageBody=json.dumps({**basic_msg_body, "is_watermark": True}),
+                )
+                continue
 
 
 def get_firehose_params(
@@ -221,9 +222,7 @@ def update_follower_table_per_interval(func: callable) -> callable:
         cur_time = time.time()
 
         if cur_time - wrapper.start_time >= FOLLOWED_LIST_UPDATE_INTERVAL_SECS:
-            # Update the follower table
-            # TODO implement getting current follwer of bot user
-            # current_follower_in_memory = get_current_follower_of_bot()
+            current_followers = _get_current_followers()
             logger.info(f"Update in memory Follower table, {cur_time}")
             wrapper.start_time = cur_time
             wrapper.calls = 0
@@ -279,7 +278,7 @@ def signal_handler(_: int, __: FrameType) -> None:
     exit(0)
 
 
-def get_followers() -> set:
+def _get_current_followers() -> set:
     cursor = None
     followers = []
     client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
@@ -296,7 +295,7 @@ def get_followers() -> set:
 def main():
     logger.info("Starting listener...")
     logger.info("Press Ctrl+C to stop the listener.")
-    current_followers = get_followers()
+    current_followers = _get_current_followers()
     logger.info("Got current followers successfully.")
     sqs_client = get_sqs_client()
     signal.signal(signal.SIGINT, signal_handler)
@@ -311,9 +310,8 @@ def main():
 
     workers_count = multiprocessing.cpu_count() * 2 - 1
     # workers_count = 1 # DEBUG
-    max_queue_size = 10000
 
-    queue = multiprocessing.Queue(maxsize=max_queue_size)
+    queue = multiprocessing.Queue(maxsize=MAX_QUEUE_SIZE)
     pool = multiprocessing.Pool(workers_count, worker_main, (cursor, queue))
 
     @update_follower_table_per_interval
