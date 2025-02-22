@@ -56,8 +56,8 @@ class FirehoseStack(BaseStack):
         task_definition = ecs.FargateTaskDefinition(
             self,
             task_name,
-            cpu=256,
-            memory_limit_mib=512,
+            cpu=2048,
+            memory_limit_mib=4096,
             runtime_platform=ecs.RuntimePlatform(
                 cpu_architecture=ecs.CpuArchitecture.X86_64,
                 operating_system_family=ecs.OperatingSystemFamily.LINUX,

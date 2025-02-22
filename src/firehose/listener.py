@@ -292,6 +292,10 @@ def _get_current_followers() -> set:
     return {f.did for f in followers}
 
 
+def on_callback_error_handler(error: BaseException) -> None:
+    logger.error("Got error!", error)
+
+
 def main():
     logger.info("Starting listener...")
     logger.info("Press Ctrl+C to stop the listener.")
@@ -324,7 +328,7 @@ def main():
 
         queue.put(message)
 
-    client.start(on_message_handler)
+    client.start(on_message_handler, on_callback_error_handler)
 
 
 if __name__ == "__main__":
