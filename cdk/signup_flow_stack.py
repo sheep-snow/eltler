@@ -2,9 +2,6 @@ from aws_cdk import Duration
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as targets
 from aws_cdk import aws_lambda as _lambda
-from aws_cdk import aws_lambda_event_sources as lambda_events
-from aws_cdk import aws_s3 as s3
-from aws_cdk import aws_s3_notifications as s3n
 from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_stepfunctions as sfn
 from aws_cdk import aws_stepfunctions_tasks as tasks
@@ -85,7 +82,7 @@ class SignupFlowStack(BaseStack):
             timeout=Duration.minutes(5),
         )
 
-    def create_executor_lambda(self, sqs: sqs.IQueue) -> _lambda.DockerImageFunction:
+    def create_executor_lambda(self) -> _lambda.DockerImageFunction:
         name: str = f"{self.common_resource.app_name}-signup-executor-{self.common_resource.stage}"
         code = _lambda.DockerImageCode.from_image_asset(
             directory=".", cmd=["signup.executor.handler"]
@@ -95,7 +92,6 @@ class SignupFlowStack(BaseStack):
             id=name.lower(),
             function_name=name,
             code=code,
-            events=[lambda_events.SqsEventSource(queue=sqs)],
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,

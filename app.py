@@ -4,7 +4,6 @@ import os
 import aws_cdk as cdk
 from aws_cdk import Environment
 
-from cdk.api_stack import ApiStack
 from cdk.common_resource_stack import CommonResourceStack
 from cdk.firehose_stack import FirehoseStack
 from cdk.follow_flow_stack import FollowFlowStack
@@ -32,7 +31,6 @@ common = CommonResourceStack(
     app, f"{app_name}-CommonResourceStack-{stage}", context_json=ctx, env=env
 )
 firehose = FirehoseStack(app, f"{app_name}-FirehoseStack-{stage}", common_resource=common, env=env)
-# api = ApiStack(app, f"{app_name}-ApiStack-{stage}", common_resource=common, env=env)
 follow = FollowFlowStack(
     app, f"{app_name}-FollowFlowStack-{stage}", common_resource=common, env=env
 )
