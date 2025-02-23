@@ -1,6 +1,6 @@
 import json
 
-from lib.aws.s3 import post_object
+from lib.aws.s3 import post_bytes_object
 from lib.log import get_logger
 from settings import settings
 
@@ -21,7 +21,7 @@ def handler(event, context):
 
     if not did.startswith("did:plc:"):
         raise ValueError(f"Invalid did: {did}")
-    post_object(bucket_name, f"{did}", json.dumps({}))
+    post_bytes_object(bucket_name, f"{did}", json.dumps({}))
     return {"message": "OK", "status": 200}
 
 

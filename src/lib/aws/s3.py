@@ -1,5 +1,6 @@
 import os
 import re
+from io import BytesIO, StringIO
 
 import boto3
 
@@ -55,15 +56,18 @@ def put_object(bucket_name, key, body):
 
 def delete_object(bucket_name, key):
     """Delete object from the bucket"""
-    s3 = boto3.client("s3", region_name=os.getenv("AWS_REGION"))
     s3.delete_object(Bucket=bucket_name, Key=key)
 
 
-def post_object(bucket_name, key, body):
+def post_bytes_object(bucket_name: str, key: str, body: BytesIO):
     """Creates object to the bucket
 
     See:
         Objectを新規作成(POST)する
     """
-    obj = s3.Object(bucket_name, key)
-    return obj.post(Body=body)
+    s3.upload_fileobj(body, bucket_name, key)
+
+
+def post_string_object(bucket_name: str, key: str, body: StringIO):
+    bytes_body = BytesIO(body.getvalue().encode("utf-8"))
+    s3.upload_fileobj(bytes_body, bucket_name, key)

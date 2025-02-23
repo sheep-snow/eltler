@@ -13,7 +13,6 @@ from collections import defaultdict
 from types import FrameType
 from typing import Any
 
-import boto3
 from atproto import (
     CAR,
     AtUri,
@@ -49,7 +48,7 @@ MEASURE_EVENT_INTERVAL_SECS = 10
 
 logger = get_logger(__name__)
 
-sqs_client: boto3.client = None
+sqs_client = get_sqs_client()
 
 current_followers: set = set()
 """listener稼働中を通じて更新され続けるフォロワー"""
@@ -191,16 +190,15 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
             }
             # ウォーターマーク画像の投稿を検知
             if _is_set_watermark_img_post(record):
-                sqs_client.send_message(
-                    QueueUrl=SET_WATERMARK_IMG_QUEUE_URL,
-                    MessageBody=json.dumps({**basic_msg_body, "is_watermark": True}),
-                )
+                msg = json.dumps({**basic_msg_body, "is_watermark": True})
+                logger.info(msg)
+                sqs_client.send_message(QueueUrl=SET_WATERMARK_IMG_QUEUE_URL, MessageBody=msg)
                 continue
             # ウォーターマーク拒否ではないコンテンツ画像の投稿を検知
             if _is_watermarking_skip(record) is False:
-                sqs_client.send_message(
-                    QueueUrl=WATERMARKING_QUEUE_URL, MessageBody=json.dumps(basic_msg_body)
-                )
+                msg = json.dumps(basic_msg_body)
+                logger.info(msg)
+                sqs_client.send_message(QueueUrl=WATERMARKING_QUEUE_URL, MessageBody=msg)
                 continue
 
 
@@ -226,7 +224,7 @@ def update_follower_table_per_interval(func: callable) -> callable:
 
         if cur_time - wrapper.start_time >= FOLLOWED_LIST_UPDATE_INTERVAL_SECS:
             current_followers = _get_current_followers()
-            logger.info(f"Update in memory Follower table, {cur_time}")
+            logger.debug(f"Update in memory Follower table, {cur_time}")
             wrapper.start_time = cur_time
             wrapper.calls = 0
 
@@ -246,7 +244,7 @@ def measure_events_per_interval(func: callable) -> callable:
 
         if cur_time - wrapper.start_time >= MEASURE_EVENT_INTERVAL_SECS:
             rate = int(wrapper.calls / MEASURE_EVENT_INTERVAL_SECS)
-            logger.info(f"NETWORK LOAD: {rate} events/second")
+            logger.debug(f"NETWORK LOAD: {rate} events/second")
             wrapper.start_time = cur_time
             wrapper.calls = 0
 
@@ -304,7 +302,6 @@ def main():
     logger.info("Press Ctrl+C to stop the listener.")
     current_followers = _get_current_followers()
     logger.info("Got current followers successfully.")
-    sqs_client = get_sqs_client()
     signal.signal(signal.SIGINT, signal_handler)
     start_cursor = None
     params = None

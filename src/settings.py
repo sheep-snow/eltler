@@ -23,6 +23,9 @@ class Settings:
     """Bluesky Bot App Password"""
     FOLLOWED_QUEUE_URL: str
     USERINFO_BUCKET_NAME: str
+    ORIGINAL_IMAGE_BUCKET: str
+    WATERMARKS_BUCKET: str
+    WATERMARKED_IMAGE_BUCKET: str
 
     def __new__(cls, *args, **kargs):
         """Singletonパターン"""
@@ -42,7 +45,10 @@ class Settings:
         self.SRC_VERSION = self._get_src_version()
         self.TIMEZONE = os.getenv("TIMEZONE", default="Asia/Tokyo")
         self.FOLLOWED_QUEUE_URL = os.getenv("FOLLOWED_QUEUE_URL")
-        self.USERINFO_BUCKET_NAME = os.getenv("USERINFO_BUCKET_NAME")
+        self.USERINFO_BUCKET_NAME = os.getenv("USERINFO_BUCKET_NAME", default=None)
+        self.ORIGINAL_IMAGE_BUCKET = os.getenv("ORIGINAL_IMAGE_BUCKET", default=None)
+        self.WATERMARKS_BUCKET = os.getenv("WATERMARKS_BUCKET", default=None)
+        self.WATERMARKED_IMAGE_BUCKET = os.getenv("WATERMARKED_IMAGE_BUCKET", default=None)
         print(f"Application Version: {self.SRC_VERSION}")
 
     def _get_src_version(self) -> str:

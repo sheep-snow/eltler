@@ -29,7 +29,8 @@ class CommonResourceStack(Stack):
 
     secret_manager: secretsmanager.ISecret
     original_image_bucket: s3.IBucket
-    transformed_image_bucket: s3.IBucket
+    watermarks_bucket: s3.IBucket
+    watermarked_image_bucket: s3.IBucket
     userinfo_bucket: s3.IBucket
     followed_queue: sqs.IQueue
     set_watermark_img_queue: sqs.IQueue
@@ -57,7 +58,8 @@ class CommonResourceStack(Stack):
         # リソースの作成
         self.secret_manager = self.create_secret_manager()
         self.original_image_bucket = self.create_original_image_bucket()
-        self.transformed_image_bucket = self.create_transformed_image_bucket()
+        self.watermarks_bucket = self.create_watermarks_bucket()
+        self.watermarked_image_bucket = self.create_watermarked_image_bucket()
         self.userinfo_bucket = self.create_userinfo_bucket()
         self.followed_queue = self.create_followed_queue()
         self.set_watermark_img_queue = self.create_set_watermark_img_queue()
@@ -131,15 +133,27 @@ class CommonResourceStack(Stack):
             encryption=s3.BucketEncryption.S3_MANAGED,
         )
 
-    def create_transformed_image_bucket(self):
+    def create_watermarks_bucket(self):
+        """ウォーターマークファイル保存用バケットの作成"""
+        watermarks_bucket_id = f"{self.app_name}-watermarks-{self.stage}-{self.aws_account}".lower()
+        return s3.Bucket(
+            scope=self,
+            id=watermarks_bucket_id,
+            bucket_name=watermarks_bucket_id,
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+        )
+
+    def create_watermarked_image_bucket(self):
         """加工済画像用バケットの作成"""
-        transformed_bucket_id = (
+        watermarked_bucket_id = (
             f"{self.app_name}-watermarked-imgs-{self.stage}-{self.aws_account}".lower()
         )
         return s3.Bucket(
             scope=self,
-            id=transformed_bucket_id,
-            bucket_name=transformed_bucket_id,
+            id=watermarked_bucket_id,
+            bucket_name=watermarked_bucket_id,
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             lifecycle_rules=[

@@ -25,6 +25,11 @@ class SetWatermarkImgStack(BaseStack):
         self.common_resource.secret_manager.grant_read(self.getter_lambda)
         self.common_resource.secret_manager.grant_read(self.notifier_lambda)
 
+        # S3バケットの利用権限付与
+        self.common_resource.watermarks_bucket.grant_read_write(self.executor_lambda)
+        self.common_resource.watermarks_bucket.grant_read_write(self.getter_lambda)
+        self.common_resource.watermarks_bucket.grant_read_write(self.notifier_lambda)
+
         # step functionの作成
         self.flow = self.create_workflow(self.getter_lambda, self.notifier_lambda)
 
@@ -70,6 +75,7 @@ class SetWatermarkImgStack(BaseStack):
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
+                "WATERMARKS_BUCKET": self.common_resource.watermarks_bucket.bucket_name,
             },
             timeout=Duration.seconds(30),
             memory_size=256,
@@ -91,6 +97,7 @@ class SetWatermarkImgStack(BaseStack):
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
+                "WATERMARKS_BUCKET": self.common_resource.watermarks_bucket.bucket_name,
             },
             timeout=Duration.seconds(30),
             memory_size=256,
@@ -112,6 +119,7 @@ class SetWatermarkImgStack(BaseStack):
             environment={
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
+                "WATERMARKS_BUCKET": self.common_resource.watermarks_bucket.bucket_name,
             },
             timeout=Duration.seconds(30),
             memory_size=256,

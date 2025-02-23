@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e" pages="3">
     <diagram id="zBH2zvv99mnQwoewfwPP" name="1.follow">
-        <mxGraphModel dx="836" dy="593" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="946" dy="597" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -190,7 +190,7 @@
         </mxGraphModel>
     </diagram>
     <diagram name="3.SetWatermarkImage" id="pTxutAxoqWgHe11oVwKW">
-        <mxGraphModel dx="836" dy="593" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="946" dy="597" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="uBW2iQ4GzWjAi1kPYscO-0"/>
                 <mxCell id="uBW2iQ4GzWjAi1kPYscO-1" parent="uBW2iQ4GzWjAi1kPYscO-0"/>
@@ -280,7 +280,7 @@
         </mxGraphModel>
     </diagram>
     <diagram name="4.Watermarking" id="6XXqHkG5tha7R47p320U">
-        <mxGraphModel dx="1004" dy="488" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="946" dy="597" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="P-FESjMPkzVl-XrOsAvO-0"/>
                 <mxCell id="P-FESjMPkzVl-XrOsAvO-1" parent="P-FESjMPkzVl-XrOsAvO-0"/>
