@@ -37,6 +37,7 @@ class CommonResourceStack(Stack):
 
     create_ecs_execution_role: iam.IRole
     create_ecs_task_role: iam.IRole
+    lambda_attrs: dict
 
     def __init__(self, scope: Construct, construct_id: str, context_json: dict, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)

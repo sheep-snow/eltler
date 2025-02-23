@@ -80,6 +80,9 @@ class SetWatermarkImgStack(BaseStack):
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
+            timeout=Duration.seconds(30),
+            memory_size=256,
+            retry_attempts=0,
         )
         self._add_common_tags(func)
         return func
@@ -98,6 +101,9 @@ class SetWatermarkImgStack(BaseStack):
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
+            timeout=Duration.seconds(30),
+            memory_size=256,
+            retry_attempts=0,
         )
         self._add_common_tags(func)
         return func
@@ -116,6 +122,9 @@ class SetWatermarkImgStack(BaseStack):
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
+            timeout=Duration.seconds(30),
+            memory_size=256,
+            retry_attempts=0,
         )
         self._add_common_tags(func)
         return func

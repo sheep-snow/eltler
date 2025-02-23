@@ -89,6 +89,28 @@ class FollowFlowStack(BaseStack):
         self._add_common_tags(rule)
         return rule
 
+    def create_sample_lambda(self) -> _lambda.DockerImageFunction:
+        name: str = f"{self.stack_name}-sample-executor"
+        code = _lambda.DockerImageCode.from_image_asset(
+            directory=".", cmd=["follow.sample.handler"]
+        )
+        func = _lambda.DockerImageFunction(
+            scope=self,
+            id=name.lower(),
+            function_name=name,
+            code=code,
+            environment={
+                "LOG_LEVEL": self.common_resource.loglevel,
+                "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
+                "SECRET_NAME": self.common_resource.secret_manager.secret_name,
+            },
+            timeout=Duration.seconds(30),
+            memory_size=256,
+            retry_attempts=0,
+        )
+        self._add_common_tags(func)
+        return func
+
     def create_executor_lambda(self) -> _lambda.DockerImageFunction:
         name: str = f"{self.stack_name}-follow-executor"
         code = _lambda.DockerImageCode.from_image_asset(
@@ -104,8 +126,9 @@ class FollowFlowStack(BaseStack):
                 "FOLLOWED_QUEUE_URL": self.common_resource.followed_queue.queue_url,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
+            timeout=Duration.seconds(30),
             memory_size=256,
-            timeout=Duration.seconds(60),
+            retry_attempts=0,
         )
         self._add_common_tags(func)
         return func
@@ -125,8 +148,9 @@ class FollowFlowStack(BaseStack):
                 "USERINFO_BUCKET_NAME": self.common_resource.userinfo_bucket.bucket_name,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
-            memory_size=256,
             timeout=Duration.seconds(60),
+            memory_size=256,
+            retry_attempts=0,
         )
         self._add_common_tags(func)
         return func
@@ -145,8 +169,9 @@ class FollowFlowStack(BaseStack):
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
-            memory_size=128,
             timeout=Duration.seconds(30),
+            memory_size=256,
+            retry_attempts=0,
         )
         self._add_common_tags(func)
         return func
@@ -165,8 +190,9 @@ class FollowFlowStack(BaseStack):
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
-            memory_size=128,
             timeout=Duration.seconds(30),
+            memory_size=256,
+            retry_attempts=0,
         )
         self._add_common_tags(func)
         return func

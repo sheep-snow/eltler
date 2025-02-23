@@ -97,8 +97,8 @@ class SignupFlowStack(BaseStack):
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
             timeout=Duration.seconds(60),
-            memory_size=128,
-            retry_attempts=1,
+            memory_size=256,
+            retry_attempts=0,
         )
         self._add_common_tags(func)
         return func
@@ -118,6 +118,9 @@ class SignupFlowStack(BaseStack):
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
+            timeout=Duration.seconds(30),
+            memory_size=256,
+            retry_attempts=0,
         )
         self._add_common_tags(func)
         return func
@@ -136,6 +139,9 @@ class SignupFlowStack(BaseStack):
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
+            timeout=Duration.seconds(30),
+            memory_size=256,
+            retry_attempts=0,
         )
         self._add_common_tags(func)
         return func

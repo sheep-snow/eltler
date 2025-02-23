@@ -1,4 +1,4 @@
-from aws_cdk import Stack, Tags
+from aws_cdk import Duration, Stack, Tags
 from aws_cdk import aws_secretsmanager as _sm
 from constructs import Construct
 
@@ -8,11 +8,18 @@ from cdk.common_resource_stack import CommonResourceStack
 class BaseStack(Stack):
     common_resource: CommonResourceStack
 
+    lambda_attrs: dict
+
     def __init__(
         self, scope: Construct, id: str, common_resource: CommonResourceStack, **kwargs
     ) -> None:
         super().__init__(scope, id, **kwargs)
         self.common_resource = common_resource
+        self.lambda_attrs = {
+            "memory_size": 256,
+            "timeout": Duration.seconds(30),
+            "retry_attempts": 0,
+        }
 
     def _add_common_tags(self, resource: Construct) -> None:
         Tags.of(resource).add("Application", self.common_resource.app_name)
