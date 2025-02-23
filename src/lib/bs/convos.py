@@ -24,7 +24,7 @@ def send_dm_to_did(dm, did, message) -> models.ChatBskyConvoDefs.MessageView:
 
 
         def handler(event, context):
-            body = event.Records[0]["body"]
+            body = event["Records"][0]["body"]
             did = body["did"]
             client = get_dm_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
             send_dm_to_did(client.chat.bsky.convo, did, msg)

@@ -16,7 +16,7 @@ def handler(event, context):
     # SQS からのメッセージを処理する
     # for record in event["Records"]:
     #     pass
-    body = event.Records[0]["body"]
+    body = event["Records"][0]["body"]
     did = body["did"]
 
     if not did.startswith("did:plc:"):

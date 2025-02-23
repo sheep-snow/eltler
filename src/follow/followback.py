@@ -13,7 +13,7 @@ def handler(event, context):
 
     client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
     follows = client.get_follows(settings.BOT_USERID)
-    body = event.Records[0]["body"]
+    body = event["Records"][0]["body"]
     did = body["did"]
     if did in [f.did for f in follows.follows]:
         return {"message": f"User-DID `{did}` has already followed", "status": 200}

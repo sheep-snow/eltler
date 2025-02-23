@@ -30,6 +30,7 @@ class FollowFlowStack(BaseStack):
         common_resource.secret_manager.grant_read(self.executor_lambda)
         common_resource.secret_manager.grant_read(self.touch_user_file_lambda)
         common_resource.secret_manager.grant_read(self.followback_lambda)
+        common_resource.secret_manager.grant_read(self.send_dm_lambda)
 
         # step functionの作成
         self.flow = self.create_workflow(
