@@ -294,6 +294,9 @@ def _get_current_followers() -> set:
 
 
 def on_callback_error_handler(error: BaseException) -> None:
+    # TODO エラーを吐いたらこのプロセスはもうダメなので自ECSサービスを破壊させるAPIコールを出す処理を追加する
+    # ECSクラスターのキャパシティプロバイダにDesired Countに自動復帰させる
+    # 更に、APIコールできなかった場合を想定してスタック側にはCloudWatchアラームを設定して例外を検知したらECSサービスを破壊させる
     logger.error("Got error!", error)
 
 
