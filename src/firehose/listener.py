@@ -41,23 +41,22 @@ SET_WATERMARK_IMG_QUEUE_URL = os.getenv("SET_WATERMARK_IMG_QUEUE_URL")
 WATERMARKING_QUEUE_URL = os.getenv("WATERMARKING_QUEUE_URL")
 
 FOLLOWED_LIST_UPDATE_INTERVAL_SECS = 300
-"""フォロワーテーブルを更新する間隔"""
+"""フォロイーテーブルを更新する間隔"""
 
 MEASURE_EVENT_INTERVAL_SECS = 10
 """イベントの計測間隔"""
 
 logger = get_logger(__name__)
-
 sqs_client = get_sqs_client()
 
-current_followers: set = set()
-"""listener稼働中を通じて更新され続けるフォロワー"""
+current_follows: set = set()
+"""listener稼働中を通じて更新され続けるフォロイー"""
 
 pool: multiprocessing.Pool = None
 """マルチプロセス用のプール"""
 
-# queue: multiprocessing.Queue = None
-# """マルチプロセス用のキュー"""
+queue: multiprocessing.Queue = None
+"""マルチプロセス用のキュー"""
 
 
 def on_callback_error_handler(error: BaseException) -> None:
@@ -121,9 +120,9 @@ def _is_post_has_image(record) -> bool:
     return False
 
 
-def _is_followers_post(post) -> bool:
-    """followerによる投稿であることを判定する"""
-    return post["author"] in current_followers
+def _is_follows_post(post) -> bool:
+    """followsによる投稿であることを判定する"""
+    return post["author"] in current_follows
 
 
 def _is_watermarking_skip(record) -> bool:
@@ -156,6 +155,8 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
         cursor_value (multiprocessing.Value): value of the cursor
         pool_queue (multiprocessing.Queue): Queue object
     """
+    current_follows = _get_current_follows()
+    logger.info("Got current follows successfully.")
     signal.signal(signal.SIGINT, signal.SIG_IGN)  # we handle it in the main process
 
     while True:
@@ -176,8 +177,8 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
             # https://atproto.blue/en/latest/atproto/atproto_client.models.app.bsky.feed.post.html
 
             record = created_post["record"]
-            if not _is_followers_post(created_post):
-                # フォロワーの投稿ではない場合はスキップ
+            if not _is_follows_post(created_post):
+                # フォロイーの投稿ではない場合はスキップ
                 continue
             if not _is_post_has_image(record):
                 # 画像投稿ではない場合はスキップ
@@ -216,15 +217,15 @@ def get_firehose_params(
     return models.ComAtprotoSyncSubscribeRepos.Params(cursor=cursor_value.value)
 
 
-def update_follower_table_per_interval(func: callable) -> callable:
-    """Update follower table per interval"""
+def update_follows_table_per_interval(func: callable) -> callable:
+    """Update follows table per interval"""
 
     def wrapper(*args) -> Any:
         cur_time = time.time()
 
         if cur_time - wrapper.start_time >= FOLLOWED_LIST_UPDATE_INTERVAL_SECS:
-            current_followers = _get_current_followers()
-            logger.debug(f"Update in memory Follower table, {cur_time}")
+            current_follows = _get_current_follows()
+            logger.debug(f"Update in memory Follows table, {cur_time}")
             wrapper.start_time = cur_time
             wrapper.calls = 0
 
@@ -279,18 +280,18 @@ def signal_handler(_: int, __: FrameType) -> None:
     exit(0)
 
 
-def _get_current_followers() -> set:
+def _get_current_follows() -> set:
     cursor = None
-    followers = []
+    follows = []
     bs_normal_client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
 
     while True:
-        fetched = bs_normal_client.get_followers(settings.BOT_USERID, cursor)
-        followers = followers + fetched.followers
+        fetched = bs_normal_client.get_follows(settings.BOT_USERID, cursor)
+        follows = follows + fetched.follows
         if not fetched.cursor:
             break
         cursor = fetched.cursor
-    return {f.did for f in followers}
+    return {f.did for f in follows}
 
 
 def on_callback_error_handler(error: BaseException) -> None:
@@ -303,8 +304,6 @@ def on_callback_error_handler(error: BaseException) -> None:
 def main():
     logger.info("Starting listener...")
     logger.info("Press Ctrl+C to stop the listener.")
-    current_followers = _get_current_followers()
-    logger.info("Got current followers successfully.")
     signal.signal(signal.SIGINT, signal_handler)
     start_cursor = None
     params = None
@@ -321,7 +320,7 @@ def main():
     queue = multiprocessing.Queue(maxsize=MAX_QUEUE_SIZE)
     pool = multiprocessing.Pool(workers_count, worker_main, (cursor, queue))
 
-    @update_follower_table_per_interval
+    @update_follows_table_per_interval
     @measure_events_per_interval
     def on_message_handler(message: firehose_models.MessageFrame) -> None:
         if cursor.value:
