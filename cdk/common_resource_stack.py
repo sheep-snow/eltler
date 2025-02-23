@@ -173,7 +173,7 @@ class CommonResourceStack(Stack):
             self,
             f"{self.app_name}-followed-queue-{self.stage}",
             queue_name=f"{self.app_name}-followed-queue-{self.stage}",
-            visibility_timeout=Duration.seconds(2),
+            visibility_timeout=Duration.seconds(30),
             retention_period=Duration.days(14),
             encryption=sqs.QueueEncryption.KMS_MANAGED,
         )
@@ -184,7 +184,7 @@ class CommonResourceStack(Stack):
             self,
             f"{self.app_name}-set-watermark-img-queue-{self.stage}",
             queue_name=f"{self.app_name}-set-watermark-img-queue-{self.stage}",
-            visibility_timeout=Duration.seconds(2),
+            visibility_timeout=Duration.seconds(30),
             retention_period=Duration.days(14),
             encryption=sqs.QueueEncryption.KMS_MANAGED,
         )
@@ -195,7 +195,7 @@ class CommonResourceStack(Stack):
             self,
             f"{self.app_name}-watermarking-queue-{self.stage}",
             queue_name=f"{self.app_name}-watermarking-queue-{self.stage}",
-            visibility_timeout=Duration.seconds(2),
+            visibility_timeout=Duration.seconds(30),
             retention_period=Duration.days(14),
             encryption=sqs.QueueEncryption.KMS_MANAGED,
         )

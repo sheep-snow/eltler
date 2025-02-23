@@ -55,7 +55,7 @@ class SignupFlowStack(BaseStack):
             self,
             id=name,
             queue_name=name,
-            visibility_timeout=Duration.seconds(2),
+            visibility_timeout=Duration.seconds(30),
             retention_period=Duration.days(14),
         )
         self._add_common_tags(queue)

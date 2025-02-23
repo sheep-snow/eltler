@@ -1,6 +1,4 @@
-from aws_cdk import Duration
-from aws_cdk import aws_events as events
-from aws_cdk import aws_events_targets as targets
+from aws_cdk import Duration, aws_lambda_event_sources
 from aws_cdk import aws_lambda as _lambda
 from aws_cdk import aws_stepfunctions as sfn
 from aws_cdk import aws_stepfunctions_tasks as tasks
@@ -15,13 +13,13 @@ class SetWatermarkImgStack(BaseStack):
         self, scope: Construct, construct_id: str, common_resource: CommonResourceStack, **kwargs
     ) -> None:
         super().__init__(scope, construct_id, common_resource=common_resource, **kwargs)
-        self.cronrule = self.create_eventbridge_cron_rule()
         self.executor_lambda = self.create_executor_lambda()
+        self.executor_lambda.add_event_source(
+            aws_lambda_event_sources.SqsEventSource(self.common_resource.set_watermark_img_queue)
+        )
         self.getter_lambda = self.create_getter_lambda()
         self.notifier_lambda = self.create_notifier_lambda()
 
-        # Lambda関数をEventBridgeのターゲットに追加
-        self.cronrule.add_target(targets.LambdaFunction(self.executor_lambda))
         # Secrets Managerの利用権限付与
         self.common_resource.secret_manager.grant_read(self.executor_lambda)
         self.common_resource.secret_manager.grant_read(self.getter_lambda)
@@ -58,13 +56,6 @@ class SetWatermarkImgStack(BaseStack):
             definition_body=sfn.DefinitionBody.from_chainable(definition),
             timeout=Duration.minutes(5),
         )
-
-    def create_eventbridge_cron_rule(self) -> events.Rule:
-        rule = events.Rule(
-            self, "EveryMinuteRule", schedule=events.Schedule.cron(minute="*/1", hour="*")
-        )
-        self._add_common_tags(rule)
-        return rule
 
     def create_executor_lambda(self) -> _lambda.DockerImageFunction:
         name: str = f"{self.stack_name}-set_watermark_img-executor"

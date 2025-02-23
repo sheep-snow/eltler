@@ -177,8 +177,11 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
             # https://atproto.blue/en/latest/atproto/atproto_client.models.app.bsky.feed.post.html
 
             record = created_post["record"]
-            if not (_is_followers_post(created_post) and _is_post_has_image(record)):
-                # フォロワーの画像投稿ではない場合はスキップ
+            if not _is_followers_post(created_post):
+                # フォロワーの投稿ではない場合はスキップ
+                continue
+            if not _is_post_has_image(record):
+                # 画像投稿ではない場合はスキップ
                 continue
             basic_msg_body = {
                 "cid": created_post["cid"],
@@ -186,17 +189,17 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
                 "author_did": created_post["author"],
                 "created_at": record.created_at,
             }
-            # ウォーターマーク拒否ではないコンテンツ画像の投稿を検知
-            if _is_watermarking_skip(record) is False:
-                sqs_client.send_message(
-                    QueueUrl=WATERMARKING_QUEUE_URL, MessageBody=json.dumps(basic_msg_body)
-                )
-                continue
             # ウォーターマーク画像の投稿を検知
             if _is_set_watermark_img_post(record):
                 sqs_client.send_message(
                     QueueUrl=SET_WATERMARK_IMG_QUEUE_URL,
                     MessageBody=json.dumps({**basic_msg_body, "is_watermark": True}),
+                )
+                continue
+            # ウォーターマーク拒否ではないコンテンツ画像の投稿を検知
+            if _is_watermarking_skip(record) is False:
+                sqs_client.send_message(
+                    QueueUrl=WATERMARKING_QUEUE_URL, MessageBody=json.dumps(basic_msg_body)
                 )
                 continue
 
