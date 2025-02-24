@@ -5,11 +5,11 @@ from settings import settings
 
 logger = get_logger(__name__)
 
-msg = """"""
+msg = """ウォーターマーク画像を受け取りました"""
 
 
 def handler(event, context):
-    """ユーザにアプリパスワードの提供をDMで依頼する"""
+    """ウォーターマーク画像が設定されたことをユーザーに通知する"""
     logger.info(f"Received event: {event}")
 
     did = event["did"]
@@ -18,5 +18,5 @@ def handler(event, context):
     return {"did": did}
 
 
-# if __name__ == "__main__":
-#     print(handler({}, {}))
+if __name__ == "__main__":
+    handler({"did": "did:plc:e4pwxsrsghzjud5x7pbe6t65"}, {})

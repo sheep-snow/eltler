@@ -63,9 +63,9 @@ def handler(event, context):
             # 1ポストあたり複数のウォーターマーク画像がある場合、最初に受理したものだけを使ってウォーターマークを設定する
             break
 
-    execution_id = uuid4()
+    execution_id = str(uuid4())
     sfn_client.start_execution(
-        stateMachineArn=sm_arn, name=execution_id, input=json.dumps({"convo_id": c.id})
+        stateMachineArn=sm_arn, name=execution_id, input=json.dumps({"did": author_did})
     )
     logger.info(f"Started state machine execution_id=`{execution_id}`")
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     sample_event = {
         "Records": [
             {
-                "body": '{"cid": "xxxxxx", "uri": "at://did:plc:xxxxxxx/app.bsky.feed.post/xxxxxxx", "author_did": "did:plc:xxxxxxxxxx", "created_at": "2025-02-23T14:13:00.709Z"}'
+                "body": '{"cid": "bafyreicqafnvvnaum3qxfgpr2gp7k6zf7orwbnekpjnhelsewzxcpr4zda", "uri": "at://did:plc:cdflm6ueigxdhbupuj5tkg2i/app.bsky.feed.post/3liwqdjex322y", "author_did": "did:plc:cdflm6ueigxdhbupuj5tkg2i", "created_at": "2025-02-24T16:10:08.206Z"}'
             }
         ]
     }
