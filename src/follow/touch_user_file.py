@@ -13,13 +13,13 @@ bucket_name = settings.USERINFO_BUCKET_NAME
 def handler(event, context):
     """S3バケットに空のユーザファイルを新規作成する"""
     logger.info(f"Received event: {event}")
-    input = json.loads(event.pop()["body"])
-    did = input["did"]
+    did = event["did"]
     if not did.startswith("did:plc:"):
         raise ValueError(f"Invalid did: {did}")
     with StringIO(json.dumps({})) as f:
         post_string_object(bucket_name, f"{did}", f)
-        return {"message": "OK", "status": 200}
+        logger.info(f"Created user file: {did} to {bucket_name}")
+    return {"did": did}
 
 
 if __name__ == "__main__":

@@ -34,6 +34,7 @@ class SignupFlowStack(BaseStack):
 
         # step functionの作成
         self.flow = self.create_workflow(self.getter_lambda, self.notifier_lambda)
+        self.executor_lambda.add_environment("STATEMACHINE_ARN", self.flow.state_machine_arn)
 
         # executor lambdaをEventBridgeのターゲットに追加
         self.cronrule = self.create_eventbridge_cron_rule()

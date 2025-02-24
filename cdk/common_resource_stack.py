@@ -175,9 +175,6 @@ class CommonResourceStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            lifecycle_rules=[
-                s3.LifecycleRule(expiration=Duration.days(self.userinfo_expiration_days))
-            ],
             encryption=s3.BucketEncryption.S3_MANAGED,
         )
 

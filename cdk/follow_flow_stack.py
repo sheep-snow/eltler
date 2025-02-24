@@ -73,13 +73,21 @@ class FollowFlowStack(BaseStack):
     ) -> sfn.StateMachine:
         # Lambdaタスク定義
         touch_user_file_task = tasks.LambdaInvoke(
-            self, "TouchUserFile", lambda_function=touch_user_file_lambda, output_path="$.Payload"
+            self,
+            "TouchUserFile",
+            lambda_function=touch_user_file_lambda,
+            input_path="$.[0].body",
+            output_path="$",
         )
         followback_task = tasks.LambdaInvoke(
-            self, "Followback", lambda_function=followback_lambda, output_path="$.Payload"
+            self,
+            "Followback",
+            lambda_function=followback_lambda,
+            input_path="$.Payload",
+            output_path="$",
         )
         send_dm_task = tasks.LambdaInvoke(
-            self, "SendDM", lambda_function=send_dm_lambda, output_path="$.Payload"
+            self, "SendDM", lambda_function=send_dm_lambda, input_path="$.Payload", output_path="$"
         )
         # ステートマシンの定義
         definition = touch_user_file_task.next(followback_task).next(send_dm_task)

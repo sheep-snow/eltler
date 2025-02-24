@@ -1,5 +1,4 @@
 import os
-from time import sleep
 from typing import Optional
 from uuid import uuid4
 
@@ -27,6 +26,9 @@ def get_followers_did(client: atproto.Client, did: str) -> set[Optional[str]]:
 def handler(event, context):
     """新規に開始された会話を処理するStatemachineを実行する"""
     logger.info(f"Received event: {event}")
+    sm_arn = os.environ["STATEMACHINE_ARN"]
+    if sm_arn is None:
+        raise ValueError("STATEMACHINE_ARN is not set.")
 
     # Get the list of conversations
     convo_client = get_dm_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
@@ -45,19 +47,29 @@ def handler(event, context):
         try:
             execution_id = f"{c.id}-{uuid4()}"
             sfn_client.start_execution(
-                **{
-                    "input": {"convo_id": c.id},
-                    "stateMachineArn": os.environ["stateMachineArn"],
-                    "name": execution_id,
-                }
+                **{"input": {"convo_id": c.id}, "stateMachineArn": sm_arn, "name": execution_id}
             )
             logger.info(f"Started state machine for convo_id: {execution_id}")
+            leave_convo(convo_client, c.id)
         except Exception as e:
             logger.error(
                 f"Could not start state machine: {e.response['Error']['Code']} {e.response['Error']['Message']}"
             )
-    return {"message": "OK", "status": 200}
+    return {"status": "success"}
 
 
 if __name__ == "__main__":
-    print(handler({}, {}))
+    x = {
+        "version": "0",
+        "id": "f52df658-c934-65fe-9835-38dc343dfed1",
+        "detail-type": "Scheduled Event",
+        "source": "aws.events",
+        "account": "883877685752",
+        "time": "2025-02-24T09:22:00Z",
+        "region": "ap-northeast-1",
+        "resources": [
+            "arn:aws:events:ap-northeast-1:883877685752:rule/wmput-SignupFlowStack-dev-SignupExecutionRuleCB66AB-8vVK7D0KBsKz"
+        ],
+        "detail": {},
+    }
+    print(handler(x, {}))
