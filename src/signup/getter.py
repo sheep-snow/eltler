@@ -47,13 +47,14 @@ def get_encrypted_app_password_from_convo(dm, convo_id) -> str | None:
 
 def handler(event, context):
     logger.info(f"Received event: {event}")
+    convo_id = event["convo_id"]
     dm_client = get_dm_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
     dm = dm_client.chat.bsky.convo
-    enc_passwd = get_encrypted_app_password_from_convo(dm, event["convo_id"])
+    enc_passwd = get_encrypted_app_password_from_convo(dm, convo_id)
     if enc_passwd is None:
         # アプリパスワードが見つからなかった場合は例外とし後続処理に流さない
         raise AppPasswordNotFoundError("No encrypted app password")
-    return {"message": "OK", "status": 200}
+    return {"convo_id": event["convo_id"]}
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Optional
 from uuid import uuid4
@@ -47,29 +48,15 @@ def handler(event, context):
         try:
             execution_id = f"{c.id}-{uuid4()}"
             sfn_client.start_execution(
-                **{"input": {"convo_id": c.id}, "stateMachineArn": sm_arn, "name": execution_id}
+                stateMachineArn=sm_arn, name=execution_id, input=json.dumps({"convo_id": c.id})
             )
             logger.info(f"Started state machine for convo_id: {execution_id}")
-            leave_convo(convo_client, c.id)
         except Exception as e:
             logger.error(
                 f"Could not start state machine: {e.response['Error']['Code']} {e.response['Error']['Message']}"
             )
-    return {"status": "success"}
+    return {"statusCode": 200, "body": "OK"}
 
 
 if __name__ == "__main__":
-    x = {
-        "version": "0",
-        "id": "f52df658-c934-65fe-9835-38dc343dfed1",
-        "detail-type": "Scheduled Event",
-        "source": "aws.events",
-        "account": "883877685752",
-        "time": "2025-02-24T09:22:00Z",
-        "region": "ap-northeast-1",
-        "resources": [
-            "arn:aws:events:ap-northeast-1:883877685752:rule/wmput-SignupFlowStack-dev-SignupExecutionRuleCB66AB-8vVK7D0KBsKz"
-        ],
-        "detail": {},
-    }
-    print(handler(x, {}))
+    handler({}, {})

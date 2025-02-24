@@ -1,6 +1,9 @@
 import json
+import os
 from io import BytesIO, StringIO
+from uuid import uuid4
 
+import boto3
 from atproto import Client, IdResolver, models
 
 from firehose.listener import ALT_OF_SET_WATERMARK_IMG
@@ -25,15 +28,17 @@ def handler(event, context):
     """SQSイベントが差すポストからウォーターマーク画像を特定し、フローを起動する"""
     logger.info(f"Received event: {event}")
     input = json.loads(event["Records"][0]["body"])
-    client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
+    sm_arn = os.environ["STATEMACHINE_ARN"]
+    sfn_client = boto3.client("stepfunctions")
     rkey = get_rkey_from_url(input.get("uri"))
     did = get_did_from_url(input.get("uri"))
+    client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
     post = client.get_post(post_rkey=rkey, profile_identify=did)
 
     author_did = input.get("author_did")
     authors_pds_client = _get_authors_pds_client(author_did)
     for image in post.value.embed.images:
-        if "alt" in image.model_fields_set and ALT_OF_SET_WATERMARK_IMG != image.alt:
+        if "alt" in image.model_fields_set and ALT_OF_SET_WATERMARK_IMG == image.alt:
             blob_cid = image.image.cid.encode()
             blob = authors_pds_client.com.atproto.sync.get_blob(
                 models.ComAtprotoSyncGetBlob.Params(cid=blob_cid, did=author_did)
@@ -48,9 +53,21 @@ def handler(event, context):
             )
             # S3に画像とそのmetadataのセットを保存
             with BytesIO(blob) as f:
-                post_bytes_object(settings.WATERMARKS_BUCKET, f"images/{author_did}", f)
+                img_object_name = f"images/{author_did}"
+                post_bytes_object(settings.WATERMARKS_BUCKET, img_object_name, f)
+                logger.info(f"Saved watermark image to S3 {img_object_name}")
             with StringIO(metadata) as f:
-                post_string_object(settings.WATERMARKS_BUCKET, f"metadatas/{author_did}", f)
+                metadata_obj_name = f"metadatas/{author_did}"
+                post_string_object(settings.WATERMARKS_BUCKET, metadata_obj_name, f)
+                logger.info(f"Saved metadata to S3 {metadata_obj_name}")
+            # 1ポストあたり複数のウォーターマーク画像がある場合、最初に受理したものだけを使ってウォーターマークを設定する
+            break
+
+    execution_id = uuid4()
+    sfn_client.start_execution(
+        stateMachineArn=sm_arn, name=execution_id, input=json.dumps({"convo_id": c.id})
+    )
+    logger.info(f"Started state machine execution_id=`{execution_id}`")
 
     return {"message": "OK", "status": 200}
 

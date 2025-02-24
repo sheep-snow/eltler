@@ -35,6 +35,7 @@ class SignupFlowStack(BaseStack):
         # step functionの作成
         self.flow = self.create_workflow(self.getter_lambda, self.notifier_lambda)
         self.executor_lambda.add_environment("STATEMACHINE_ARN", self.flow.state_machine_arn)
+        self.flow.grant_start_execution(self.executor_lambda)
 
         # executor lambdaをEventBridgeのターゲットに追加
         self.cronrule = self.create_eventbridge_cron_rule()
@@ -44,7 +45,7 @@ class SignupFlowStack(BaseStack):
         rule = events.Rule(
             self,
             "SignupExecutionRule",
-            schedule=events.Schedule.cron(minute="*/2", hour="*"),
+            schedule=events.Schedule.rate(Duration.minutes(2)),
             enabled=True,
         )
         self._add_common_tags(rule)
@@ -69,10 +70,14 @@ class SignupFlowStack(BaseStack):
     def create_workflow(self, getter_lambda, notifier_lambda) -> sfn.StateMachine:
         # Lambdaタスク定義
         getter_task = tasks.LambdaInvoke(
-            self, "getter", lambda_function=getter_lambda, output_path="$.Payload"
+            self, "getter", lambda_function=getter_lambda, output_path="$"
         )
         notifier_task = tasks.LambdaInvoke(
-            self, "notifier", lambda_function=notifier_lambda, output_path="$.Payload"
+            self,
+            "notifier",
+            lambda_function=notifier_lambda,
+            input_path="$.Payload",
+            output_path="$",
         )
         # ステートマシンの定義
         definition = getter_task.next(notifier_task)
