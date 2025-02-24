@@ -1,22 +1,27 @@
 {
-    "dev": {
-        "app_name": "wmput",
-        "loglevel": "DEBUG",
-        "max_retries": 1,
-        "image_expiration_days": 3,
-        "userinfo_expiration_days": 30,
-        "vpc-cidr": "10.22.0.0/24",
-        "vpc-mask": 26,
-        "max_capacity": 1
-    },
-    "prod": {
-        "app_name": "wmput",
-        "loglevel": "INFO",
-        "max_retries": 3,
-        "image_expiration_days": 7,
-        "userinfo_expiration_days": 365,
-        "vpc-cidr": "10.33.0.0/24",
-        "vpc-mask": 26,
-        "max_capacity": 1
-    }
+  "dev": {
+    "app_name": "wmput",
+    "loglevel": "DEBUG",
+    "max_retries": 1,
+    "image_expiration_days": 3,
+    "userinfo_expiration_days": 30,
+    "vpc-cidr": "10.22.0.0/24",
+    "vpc-mask": 26,
+    "max_capacity": 1
+  },
+  "prod": {
+    "app_name": "wmput",
+    "loglevel": "INFO",
+    "max_retries": 3,
+    "image_expiration_days": 7,
+    "userinfo_expiration_days": 365,
+    "vpc-cidr": "10.33.0.0/24",
+    "vpc-mask": 26,
+    "max_capacity": 1
+  },
+  "availability-zones:account=883877685752:region=ap-northeast-1": [
+    "ap-northeast-1a",
+    "ap-northeast-1c",
+    "ap-northeast-1d"
+  ]
 }

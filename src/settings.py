@@ -18,7 +18,14 @@ class Settings:
     FERNET_KEY: str
     """A URL-safe base64-encoded 32-byte key. Use Fernet.generate_key().decode() to generate a new key."""
     BOT_USERID: str
+    """Bluesky Bot User Handle"""
     BOT_APP_PASSWORD: str
+    """Bluesky Bot App Password"""
+    FOLLOWED_QUEUE_URL: str
+    USERINFO_BUCKET_NAME: str
+    ORIGINAL_IMAGE_BUCKET: str
+    WATERMARKS_BUCKET: str
+    WATERMARKED_IMAGE_BUCKET: str
 
     def __new__(cls, *args, **kargs):
         """Singletonパターン"""
@@ -28,14 +35,20 @@ class Settings:
 
     def __init__(self):
         """設定を読み込む"""
-        _secrets = get_secret(f"{os.getenv('')}")
+        _secrets = get_secret(f"{os.getenv('SECRET_NAME')}")
         self.FERNET_KEY = _secrets.get("fernet_key")
         self.BOT_USERID = _secrets.get("bot_userid")
         self.BOT_APP_PASSWORD = _secrets.get("bot_app_password")
         self.APP_NAME = os.getenv("APP_NAME", default="wmput")
-        self.LOGLEVEL = INFO if self.STAGE.lower == "prod" else DEBUG
         self.STAGE = os.getenv("STAGE", default="dev")
+        self.LOGLEVEL = INFO if self.STAGE.lower == "prod" else DEBUG
         self.SRC_VERSION = self._get_src_version()
+        self.TIMEZONE = os.getenv("TIMEZONE", default="Asia/Tokyo")
+        self.FOLLOWED_QUEUE_URL = os.getenv("FOLLOWED_QUEUE_URL")
+        self.USERINFO_BUCKET_NAME = os.getenv("USERINFO_BUCKET_NAME", default=None)
+        self.ORIGINAL_IMAGE_BUCKET = os.getenv("ORIGINAL_IMAGE_BUCKET", default=None)
+        self.WATERMARKS_BUCKET = os.getenv("WATERMARKS_BUCKET", default=None)
+        self.WATERMARKED_IMAGE_BUCKET = os.getenv("WATERMARKED_IMAGE_BUCKET", default=None)
         print(f"Application Version: {self.SRC_VERSION}")
 
     def _get_src_version(self) -> str:

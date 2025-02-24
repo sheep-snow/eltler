@@ -9,10 +9,10 @@ def get_message() -> str:
 
 def handler(event, context):
     """Lambda handler."""
+    logger.info(f"Received event: {event}")
     msg = get_message()
     logger.info(msg)
     return {"message": "OK", "status": 200}
-    
 
 
 # for local debugging

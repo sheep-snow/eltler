@@ -6,6 +6,7 @@ See:
 
 import json
 import multiprocessing
+import os
 import signal
 import time
 from collections import defaultdict
@@ -21,12 +22,41 @@ from atproto import (
     parse_subscribe_repos_message,
 )
 
-from lib.log import logger
+from lib.aws.sqs import get_sqs_client
+from lib.bs.client import get_client
+from lib.log import get_logger
+from settings import settings
 
 _INTERESTED_RECORDS = {
-    models.ids.AppBskyFeedPost: models.AppBskyFeedPost,  # Posts
-    models.ids.AppBskyGraphFollow: models.AppBskyGraphFollow,  # Follows
+    # models.ids.AppBskyGraphFollow: models.AppBskyGraphFollow,  # Follows
+    models.ids.AppBskyFeedPost: models.AppBskyFeedPost  # Posts
 }
+"""Listen対象とするレコードの種類"""
+
+ALT_OF_SET_WATERMARK_IMG = "wmset"
+ALT_OF_SKIP_WATERMARKING = "nown"
+MAX_QUEUE_SIZE = 10000
+FOLLOWED_QUEUE_URL = os.getenv("FOLLOWED_QUEUE_URL")
+SET_WATERMARK_IMG_QUEUE_URL = os.getenv("SET_WATERMARK_IMG_QUEUE_URL")
+WATERMARKING_QUEUE_URL = os.getenv("WATERMARKING_QUEUE_URL")
+
+FOLLOWED_LIST_UPDATE_INTERVAL_SECS = 300
+"""フォロイーテーブルを更新する間隔"""
+
+MEASURE_EVENT_INTERVAL_SECS = 10
+"""イベントの計測間隔"""
+
+logger = get_logger(__name__)
+sqs_client = get_sqs_client()
+
+current_follows: set = set()
+"""listener稼働中を通じて更新され続けるフォロイー"""
+
+pool: multiprocessing.Pool = None
+"""マルチプロセス用のプール"""
+
+queue: multiprocessing.Queue = None
+"""マルチプロセス用のキュー"""
 
 
 def on_callback_error_handler(error: BaseException) -> None:
@@ -80,6 +110,44 @@ def _get_ops_by_type(commit: models.ComAtprotoSyncSubscribeRepos.Commit) -> defa
     return operation_by_type
 
 
+def _is_post_has_image(record) -> bool:
+    """画像を含む投稿であることを判定する"""
+    try:
+        if record.embed.images[0].image.mime_type.startswith("image/"):
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _is_follows_post(post) -> bool:
+    """followsによる投稿であることを判定する"""
+    return post["author"] in current_follows
+
+
+def _is_watermarking_skip(record) -> bool:
+    """ウォーターマーク付与を拒否するAltが付与されている事を判定する"""
+    images_alt = {i.alt for i in record.embed.images if "alt" in i.model_fields_set}
+    if ALT_OF_SKIP_WATERMARKING in images_alt:
+        return True
+    else:
+        return False
+
+
+def _is_set_watermark_img_post(record) -> bool:
+    """ウォーターマーク画像の投稿であることを判定する"""
+    images_alt = {i.alt for i in record.embed.images if "alt" in i.model_fields_set}
+    if ALT_OF_SET_WATERMARK_IMG in images_alt:
+        return True
+    else:
+        return False
+
+
+def _followed_to_bot(record) -> bool:
+    """Check if the followed DID is a bot user"""
+    return record.startswith("did:at:bot:")
+
+
 def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing.Queue) -> None:
     """Worker main function
 
@@ -87,6 +155,8 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
         cursor_value (multiprocessing.Value): value of the cursor
         pool_queue (multiprocessing.Queue): Queue object
     """
+    current_follows = _get_current_follows()
+    logger.info("Got current follows successfully.")
     signal.signal(signal.SIGINT, signal.SIG_IGN)  # we handle it in the main process
 
     while True:
@@ -103,31 +173,34 @@ def worker_main(cursor_value: multiprocessing.Value, pool_queue: multiprocessing
             continue
 
         ops = _get_ops_by_type(commit)
-
         for created_post in ops[models.ids.AppBskyFeedPost]["created"]:
-            # TODO implement it
             # https://atproto.blue/en/latest/atproto/atproto_client.models.app.bsky.feed.post.html
-            author = created_post["author"]
-            record = created_post["record"]
-            inlined_text = record.text.replace("\n", " ")
-            # when a new post is captured
-            logger.info(
-                f"NEW POST [CREATED_AT={record.created_at}][AUTHOR={author}]: {inlined_text}"
-            )
 
-        for follow in ops[models.ids.AppBskyGraphFollow]["created"]:
-            # TODO implement it
-            # https://pub.dev/documentation/lexicon/latest/docs/appBskyGraphFollow-constant.html
-            payload = json.dumps(
-                {
-                    "cid": follow["cid"],
-                    "uri": follow["uri"],
-                    "follower_did": follow["author"],
-                    "followed_did": follow["record"].subject,
-                    "created_at": follow["record"].created_at,
-                }
-            )
-            logger.info(f"NEW FOLLOW: {payload}")
+            record = created_post["record"]
+            if not _is_follows_post(created_post):
+                # フォロイーの投稿ではない場合はスキップ
+                continue
+            if not _is_post_has_image(record):
+                # 画像投稿ではない場合はスキップ
+                continue
+            basic_msg_body = {
+                "cid": created_post["cid"],
+                "uri": created_post["uri"],
+                "author_did": created_post["author"],
+                "created_at": record.created_at,
+            }
+            # ウォーターマーク画像の投稿を検知
+            if _is_set_watermark_img_post(record):
+                msg = json.dumps({**basic_msg_body, "is_watermark": True})
+                logger.info(msg)
+                sqs_client.send_message(QueueUrl=SET_WATERMARK_IMG_QUEUE_URL, MessageBody=msg)
+                continue
+            # ウォーターマーク拒否ではないコンテンツ画像の投稿を検知
+            if _is_watermarking_skip(record) is False:
+                msg = json.dumps(basic_msg_body)
+                logger.info(msg)
+                sqs_client.send_message(QueueUrl=WATERMARKING_QUEUE_URL, MessageBody=msg)
+                continue
 
 
 def get_firehose_params(
@@ -144,22 +217,35 @@ def get_firehose_params(
     return models.ComAtprotoSyncSubscribeRepos.Params(cursor=cursor_value.value)
 
 
-def measure_events_per_second(func: callable) -> callable:
-    """Measure events per second
+def update_follows_table_per_interval(func: callable) -> callable:
+    """Update follows table per interval"""
 
-    Args:
-        func (callable): Function
+    def wrapper(*args) -> Any:
+        cur_time = time.time()
 
-    Returns:
-        callable: Wrapper function
-    """
+        if cur_time - wrapper.start_time >= FOLLOWED_LIST_UPDATE_INTERVAL_SECS:
+            current_follows = _get_current_follows()
+            logger.debug(f"Update in memory Follows table, {cur_time}")
+            wrapper.start_time = cur_time
+            wrapper.calls = 0
+
+        return func(*args)
+
+    wrapper.start_time = time.time()
+
+    return wrapper
+
+
+def measure_events_per_interval(func: callable) -> callable:
+    """Measure events per second"""
 
     def wrapper(*args) -> Any:
         wrapper.calls += 1
         cur_time = time.time()
 
-        if cur_time - wrapper.start_time >= 1:
-            logger.info(f"NETWORK LOAD: {wrapper.calls} events/second")
+        if cur_time - wrapper.start_time >= MEASURE_EVENT_INTERVAL_SECS:
+            rate = int(wrapper.calls / MEASURE_EVENT_INTERVAL_SECS)
+            logger.debug(f"NETWORK LOAD: {rate} events/second")
             wrapper.start_time = cur_time
             wrapper.calls = 0
 
@@ -194,12 +280,32 @@ def signal_handler(_: int, __: FrameType) -> None:
     exit(0)
 
 
-if __name__ == "__main__":
+def _get_current_follows() -> set:
+    cursor = None
+    follows = []
+    bs_normal_client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
+
+    while True:
+        fetched = bs_normal_client.get_follows(settings.BOT_USERID, cursor)
+        follows = follows + fetched.follows
+        if not fetched.cursor:
+            break
+        cursor = fetched.cursor
+    return {f.did for f in follows}
+
+
+def on_callback_error_handler(error: BaseException) -> None:
+    # TODO エラーを吐いたらこのプロセスはもうダメなので自ECSサービスを破壊させるAPIコールを出す処理を追加する
+    # ECSクラスターのキャパシティプロバイダにDesired Countに自動復帰させる
+    # 更に、APIコールできなかった場合を想定してスタック側にはCloudWatchアラームを設定して例外を検知したらECSサービスを破壊させる
+    logger.error("Got error!", error)
+
+
+def main():
     logger.info("Starting listener...")
+    logger.info("Press Ctrl+C to stop the listener.")
     signal.signal(signal.SIGINT, signal_handler)
-
     start_cursor = None
-
     params = None
     cursor = multiprocessing.Value("i", 0)
     if start_cursor is not None:
@@ -208,14 +314,14 @@ if __name__ == "__main__":
 
     client = FirehoseSubscribeReposClient(params)
 
-    # workers_count = multiprocessing.cpu_count() * 2 - 1
-    workers_count = 1
-    max_queue_size = 10000
+    workers_count = multiprocessing.cpu_count() * 2 - 1
+    # workers_count = 1 # DEBUG
 
-    queue = multiprocessing.Queue(maxsize=max_queue_size)
+    queue = multiprocessing.Queue(maxsize=MAX_QUEUE_SIZE)
     pool = multiprocessing.Pool(workers_count, worker_main, (cursor, queue))
 
-    @measure_events_per_second
+    @update_follows_table_per_interval
+    @measure_events_per_interval
     def on_message_handler(message: firehose_models.MessageFrame) -> None:
         if cursor.value:
             # we are using updating the cursor state here because of multiprocessing
@@ -225,3 +331,7 @@ if __name__ == "__main__":
         queue.put(message)
 
     client.start(on_message_handler, on_callback_error_handler)
+
+
+if __name__ == "__main__":
+    main()
