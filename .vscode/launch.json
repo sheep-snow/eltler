@@ -14,6 +14,8 @@
                 "PYTHONPATH": "${workspaceFolder}/src:${PYTHONPATH}",
                 "SECRET_NAME": "wmput-secretsmanager-dev",
                 "AWS_REGION": "ap-northeast-1",
+                "USERINFO_BUCKET_NAME": "wmput-userinfo-files-dev-883877685752",
+                "FOLLOWED_QUEUE_URL": "https://sqs.ap-northeast-1.amazonaws.com/883877685752/wmput-followed-queue-dev",
             }
         },
         {

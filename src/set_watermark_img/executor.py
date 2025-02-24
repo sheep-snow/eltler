@@ -63,4 +63,4 @@ if __name__ == "__main__":
             }
         ]
     }
-    print(handler(sample_event, {}))
+    handler(sample_event, {})
