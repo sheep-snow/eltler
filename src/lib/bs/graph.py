@@ -3,7 +3,6 @@ from venv import logger
 import atproto
 from atproto import models
 
-from lib.bs.client import get_client
 from settings import settings
 
 logger = logger.get_logger(__name__)

@@ -63,7 +63,7 @@ class SignoutFlowStack(BaseStack):
 
     def create_eventbridge_cron_rule(self) -> events.Rule:
         rule = events.Rule(
-            self, "EveryMinuteRule", schedule=events.Schedule.cron(minute="*/1", hour="*")
+            self, "EveryMinuteRule", schedule=events.Schedule.rate(Duration.minutes(5))
         )
         self._add_common_tags(rule)
         return rule
