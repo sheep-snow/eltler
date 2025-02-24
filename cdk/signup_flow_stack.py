@@ -17,12 +17,6 @@ class SignupFlowStack(BaseStack):
     ) -> None:
         super().__init__(scope, construct_id, common_resource=common_resource, **kwargs)
 
-        # # S3バケットにファイルがPOSTされた際に、対象ユーザーにAppPasswordのDM経由の提供を促すDMを送る
-        # self.userfile_posted_queue = self.create_userfile_object_posted_queue()
-        # self.add_event_notification_to_bucket(
-        #     self.common_resource.userfile_bucket, self.userfile_posted_queue
-        # )
-
         self.executor_lambda = self.create_executor_lambda()
         self.getter_lambda = self.create_getter_lambda()
         self.notifier_lambda = self.create_notifier_lambda()
@@ -62,10 +56,6 @@ class SignupFlowStack(BaseStack):
         )
         self._add_common_tags(queue)
         return queue
-
-    # def add_event_notification_to_bucket(bucket: s3.IBucket, sqs: sqs.IQueue):
-    #     # S3 POST イベント時の通知をSQSに追加
-    #     bucket.add_event_notification(s3.EventType.OBJECT_CREATED_POST, s3n.SqsDestination(sqs))
 
     def create_workflow(self, getter_lambda, notifier_lambda) -> sfn.StateMachine:
         # Lambdaタスク定義

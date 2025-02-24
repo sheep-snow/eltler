@@ -29,6 +29,8 @@ class WatermarkingFlowStack(BaseStack):
 
         # step functionの作成
         self.flow = self.create_workflow(self.getter_lambda, self.notifier_lambda)
+        self.flow.grant_start_execution(self.executor_lambda)
+        self.executor_lambda.add_environment("STATE_MACHINE_ARN", self.flow.state_machine_arn)
 
     def create_workflow(self, getter_lambda, notifier_lambda) -> sfn.StateMachine:
         # Lambdaタスク定義
