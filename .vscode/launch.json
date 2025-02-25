@@ -16,7 +16,9 @@
                 "AWS_REGION": "ap-northeast-1",
                 "USERINFO_BUCKET_NAME": "wmput-userinfo-files-dev-883877685752",
                 "FOLLOWED_QUEUE_URL": "https://sqs.ap-northeast-1.amazonaws.com/883877685752/wmput-followed-queue-dev",
-                "STATEMACHINE_ARN": "arn:aws:states:ap-northeast-1:883877685752:stateMachine:SignupFlowA3267DC2-RaKLZChCHVaQ"
+                "STATEMACHINE_ARN": "arn:aws:states:ap-northeast-1:883877685752:stateMachine:SignupFlowA3267DC2-RaKLZChCHVaQ",
+                "SET_WATERMARK_IMG_QUEUE_URL": "https://sqs.ap-northeast-1.amazonaws.com/883877685752/wmput-set-watermark-img-queue-dev",
+                "WATERMARKS_BUCKET": "wmput-watermarks-dev-883877685752"
             }
         },
         {

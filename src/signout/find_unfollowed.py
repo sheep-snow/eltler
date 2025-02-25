@@ -1,5 +1,6 @@
 from atproto import Client, models
 
+from lib.aws.sqs import get_sqs_client
 from lib.bs.client import get_client
 from lib.log import get_logger
 from settings import settings
@@ -42,7 +43,13 @@ def get_follows(client: Client):
 def handler(event, context):
     logger.info(f"Received event: {event}")
     client = get_client(settings.BOT_USERID, settings.BOT_APP_PASSWORD)
+    # フォローしているがフォローされていないユーザーを取得
     unfollowers = get_follows(client).difference(get_followers(client))
+    sqs = get_sqs_client()
+    for unfollower in unfollowers:
+        sqs.send_message(QueueUrl=settings.SIGNOUT_QUEUE_URL, MessageBody={"did": unfollower})
+        logger.info(f"Send did {unfollower} to the SQS")
+
     return {"message": "OK", "status": 200}
 
 

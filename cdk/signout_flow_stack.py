@@ -1,7 +1,10 @@
 from aws_cdk import Duration
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as targets
+from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_pipes as pipes
+from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_stepfunctions as sfn
 from aws_cdk import aws_stepfunctions_tasks as tasks
 from constructs import Construct
@@ -16,7 +19,10 @@ class SignoutFlowStack(BaseStack):
     ) -> None:
         super().__init__(scope, construct_id, common_resource=common_resource, **kwargs)
         self.cronrule = self.create_eventbridge_cron_rule()
+        self.signout_queue = self.create_signout_queue()
         self.executor_lambda = self.create_executor_lambda()
+        self.signout_queue.grant_send_messages(self.executor_lambda)
+        self.executor_lambda.add_environment("SIGNOUT_QUEUE_URL", self.signout_queue.queue_url)
         self.getter_lambda = self.create_getter_lambda()
         self.notifier_lambda = self.create_notifier_lambda()
 
@@ -31,6 +37,42 @@ class SignoutFlowStack(BaseStack):
         self.flow = self.create_workflow(self.getter_lambda, self.notifier_lambda)
         self.flow.grant_start_execution(self.executor_lambda)
         self.executor_lambda.add_environment("STATE_MACHINE_ARN", self.flow.state_machine_arn)
+
+        self.create_eventbridge_pipe(self.signout_queue)
+
+    def create_eventbridge_pipe(self, src_sqs: sqs.IQueue) -> pipes.CfnPipe:
+        """EventBridge Pipes を介してSQSメッセージでステートマシンを起動されるようにする"""
+        pipes_role = iam.Role(
+            self, "SignOutFlowPipesRole", assumed_by=iam.ServicePrincipal("pipes.amazonaws.com")
+        )
+        self.common_resource.followed_queue.grant_consume_messages(pipes_role)
+        self.flow.grant_start_execution(pipes_role)
+        pipe_name = f"{self.stack_name}-signout-flow-pipe"
+        pipes.CfnPipe(
+            self,
+            id=pipe_name,
+            name=pipe_name,
+            role_arn=pipes_role.role_arn,
+            source=src_sqs.queue_arn,
+            source_parameters=pipes.CfnPipe.PipeSourceParametersProperty(
+                sqs_queue_parameters=pipes.CfnPipe.PipeSourceSqsQueueParametersProperty(
+                    batch_size=1
+                )
+            ),
+            target=self.flow.state_machine_arn,
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-pipes-pipe-pipetargetstatemachineparameters.html
+            target_parameters=pipes.CfnPipe.PipeTargetParametersProperty(
+                step_function_state_machine_parameters=pipes.CfnPipe.PipeTargetStateMachineParametersProperty(
+                    invocation_type="FIRE_AND_FORGET"
+                )
+            ),
+        )
+
+    def create_signout_queue(self) -> sqs.Queue:
+        name = f"{self.common_resource.app_name}-signout-queue-{self.common_resource.stage}"
+        return sqs.Queue(
+            self, name, visibility_timeout=Duration.seconds(60), retention_period=Duration.days(14)
+        )
 
     def create_workflow(self, getter_lambda, notifier_lambda):
         # Lambdaタスク定義
@@ -71,7 +113,7 @@ class SignoutFlowStack(BaseStack):
     def create_executor_lambda(self) -> _lambda.DockerImageFunction:
         name: str = f"{self.stack_name}-signout-executor"
         code = _lambda.DockerImageCode.from_image_asset(
-            directory=".", cmd=["signout.executor.handler"]
+            directory=".", cmd=["signout.find_unfollowed.handler"]
         )
         func = _lambda.DockerImageFunction(
             scope=self,
@@ -82,7 +124,7 @@ class SignoutFlowStack(BaseStack):
                 "LOG_LEVEL": self.common_resource.loglevel,
                 "SECRET_NAME": self.common_resource.secret_manager.secret_name,
             },
-            timeout=Duration.seconds(30),
+            timeout=Duration.seconds(60),
             memory_size=256,
             retry_attempts=0,
         )
